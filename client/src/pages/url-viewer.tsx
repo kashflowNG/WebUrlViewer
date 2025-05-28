@@ -24,7 +24,7 @@ export default function UrlViewer() {
   const [urlInput, setUrlInput] = useState("");
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50 font-sans">
+    <div className="h-screen flex flex-col bg-gray-50 font-sans overflow-hidden">
       <NavigationBar
         currentUrl={currentUrl}
         urlInput={urlInput}

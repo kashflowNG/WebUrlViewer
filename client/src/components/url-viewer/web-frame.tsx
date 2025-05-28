@@ -108,7 +108,7 @@ export default function WebFrame({
 
   // Show iframe with loading overlay
   return (
-    <main className="flex-1 relative overflow-hidden">
+    <main className="flex-1 relative overflow-hidden bg-white">
       {/* Loading overlay */}
       {isLoading && (
         <div className="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center z-20">
@@ -122,10 +122,11 @@ export default function WebFrame({
       {/* Web content iframe */}
       <iframe
         src={currentUrl}
-        className="w-full h-full border-0 bg-white"
-        sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
-        loading="lazy"
+        className="w-full h-full border-0 bg-white block"
+        sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-top-navigation"
+        loading="eager"
         title="Web Content Viewer"
+        style={{ minHeight: '100%', display: 'block' }}
       />
     </main>
   );
