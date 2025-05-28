@@ -11,6 +11,7 @@ interface WebFrameProps {
   onRetry: () => void;
   onClear: () => void;
   onLoadExample: (url: string) => void;
+  iframeRef?: React.RefObject<HTMLIFrameElement>;
 }
 
 export default function WebFrame({
@@ -20,7 +21,8 @@ export default function WebFrame({
   errorMessage,
   onRetry,
   onClear,
-  onLoadExample
+  onLoadExample,
+  iframeRef
 }: WebFrameProps) {
   const [autoScroll, setAutoScroll] = useState(() => {
     const saved = localStorage.getItem('urlViewer_autoScroll');
@@ -36,7 +38,6 @@ export default function WebFrame({
   });
   const [scrollOffset, setScrollOffset] = useState(0);
   const [scrollDirection, setScrollDirection] = useState(1); // 1 for down, -1 for up
-  const iframeRef = useRef<HTMLIFrameElement>(null);
   const scrollIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
 

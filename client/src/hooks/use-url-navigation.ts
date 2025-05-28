@@ -1,5 +1,6 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { validateUrl, normalizeUrl } from "@/lib/url-utils";
+import { useWebSocket } from "./use-websocket";
 
 interface NavigationState {
   currentUrl: string;
@@ -25,6 +26,11 @@ export function useUrlNavigation() {
     history: [],
     currentIndex: -1
   });
+
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  
+  // WebSocket connection to Telegram bot
+  const { isConnected, lastMessage, connectionStatus: wsStatus, sendMessage } = useWebSocket();
 
   const updateNavigationButtons = useCallback((history: string[], index: number) => {
     return {

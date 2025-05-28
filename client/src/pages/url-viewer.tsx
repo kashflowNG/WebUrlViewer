@@ -18,7 +18,9 @@ export default function UrlViewer() {
     goForward,
     refresh,
     clearError,
-    retry
+    retry,
+    iframeRef,
+    isConnectedToBot
   } = useUrlNavigation();
 
   const [urlInput, setUrlInput] = useState("");
@@ -46,6 +48,7 @@ export default function UrlViewer() {
         onRetry={retry}
         onClear={clearError}
         onLoadExample={loadUrl}
+        iframeRef={iframeRef}
       />
       
       <StatusBar
