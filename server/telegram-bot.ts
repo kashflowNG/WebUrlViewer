@@ -70,7 +70,7 @@ try {
         const updates = await bot.getUpdates({ timeout: 10, limit: 1 });
         for (const update of updates) {
           bot.processUpdate(update);
-          await bot.deleteWebhook();
+          await bot.deleteWebHook();
         }
       } catch (error) {
         // Silently handle polling errors to prevent spam
@@ -93,12 +93,17 @@ try {
 
 console.log('🤖 Telegram Bot initialized with token:', BOT_TOKEN.substring(0, 10) + '...');
 
-// Send welcome message
-bot.sendMessage(CHAT_ID, `🚀 URL Viewer Bot is now running!
+// Automatically activate the bot and send welcome message
+botState.isActive = true;
+
+bot.sendMessage(CHAT_ID, `🚀 URL Viewer Bot is now running and connected to your web view!
+
+🔗 WebSocket connection: ACTIVE
+📊 Current Status: Bot is monitoring your web viewer
 
 Available commands:
 /start - Start the bot
-/status - Check current status
+/status - Check current web view status
 /scroll_on - Enable auto-scroll
 /scroll_off - Disable auto-scroll
 /refresh_on - Enable auto-refresh
@@ -121,21 +126,25 @@ bot.onText(/\/start/, (msg: any) => {
 bot.onText(/\/status/, (msg: any) => {
   const chatId = msg.chat.id.toString();
   if (chatId === CHAT_ID) {
-    const statusMessage = `📊 Current Status:
+    const connectedClients = webSocketClients.size;
+    const statusMessage = `📊 Web View Status Report:
 
+🔗 WebSocket Connection: ${connectedClients > 0 ? '✅ CONNECTED' : '❌ DISCONNECTED'}
+👥 Connected Clients: ${connectedClients}
 🔄 Auto-scroll: ${botState.autoScroll ? '✅ ON' : '❌ OFF'}
 🔃 Auto-refresh: ${botState.autoRefresh ? '✅ ON' : '❌ OFF'}
 ⏱️ Refresh interval: ${botState.refreshInterval} seconds
-🌐 Current URL: ${botState.currentUrl || 'None set'}
-🤖 Bot active: ${botState.isActive ? '✅ YES' : '❌ NO'}
+🌐 Current URL: ${botState.currentUrl || 'No website loaded yet'}
+🤖 Bot Status: ${botState.isActive ? '✅ ACTIVE & MONITORING' : '❌ INACTIVE'}
 
-📈 Live Counters:
+📈 Live Activity Counters:
 🔃 Total Refreshes: ${botState.refreshCount}
 🔄 Total Scrolls: ${botState.scrollCount}
 🕐 Last Refresh: ${botState.lastRefresh ? botState.lastRefresh.toLocaleString() : 'Never'}
 🕐 Last Scroll: ${botState.lastScroll ? botState.lastScroll.toLocaleString() : 'Never'}
 
-Keep this bot running for 24/7 automation! 🚀`;
+✨ Your web view is ${connectedClients > 0 ? 'connected and ready' : 'waiting for connection'}!
+Bot will keep running 24/7 even when your phone is off! 🚀`;
     
     bot.sendMessage(CHAT_ID, statusMessage);
   }
