@@ -305,7 +305,7 @@ function handleWebMessage(message: any) {
 }
 
 // Export functions for server integration
-export { botState, startAutoScroll, stopAutoScroll, startAutoRefresh, stopAutoRefresh, addWebSocketClient, broadcastToClients };
+export { botState, startAutoScroll, stopAutoScroll, startAutoRefresh, stopAutoRefresh, broadcastToClients };
 
 // Status update every 5 minutes when active
 setInterval(() => {

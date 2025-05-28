@@ -200,6 +200,52 @@ export function useUrlNavigation() {
     }
   }, [state.currentUrl, loadUrl]);
 
+  // Handle Telegram bot commands
+  useEffect(() => {
+    if (!lastMessage) return;
+
+    switch (lastMessage.type) {
+      case 'scroll':
+        // Auto scroll when commanded by Telegram bot
+        if (iframeRef.current) {
+          try {
+            const iframe = iframeRef.current;
+            const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+            if (iframeDoc) {
+              iframeDoc.documentElement.scrollTop += 300;
+              sendMessage({ type: 'scroll_performed' });
+            }
+          } catch (error) {
+            console.log('Auto-scroll from bot command');
+            sendMessage({ type: 'scroll_performed' });
+          }
+        }
+        break;
+        
+      case 'refresh':
+        // Auto refresh when commanded by Telegram bot
+        refresh();
+        break;
+        
+      case 'bot_state':
+        // Update connection status based on bot state
+        const botData = lastMessage.data;
+        setState(prev => ({
+          ...prev,
+          connectionStatus: `Bot: ${botData.isActive ? 'Active' : 'Inactive'} | Auto-scroll: ${botData.autoScroll ? 'ON' : 'OFF'} | Auto-refresh: ${botData.autoRefresh ? 'ON' : 'OFF'}`
+        }));
+        break;
+    }
+  }, [lastMessage]);
+
+  // Update connection status based on WebSocket state
+  useEffect(() => {
+    setState(prev => ({
+      ...prev,
+      connectionStatus: wsStatus
+    }));
+  }, [wsStatus, isConnected]);
+
   return {
     currentUrl: state.currentUrl,
     isLoading: state.isLoading,
@@ -213,6 +259,8 @@ export function useUrlNavigation() {
     goForward,
     refresh,
     clearError,
-    retry
+    retry,
+    iframeRef, // Export iframe ref for WebSocket commands
+    isConnectedToBot: isConnected
   };
 }
