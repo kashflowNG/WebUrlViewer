@@ -1,8 +1,12 @@
 import TelegramBot from 'node-telegram-bot-api';
+import WebSocket from 'ws';
 
 // Bot credentials
 const BOT_TOKEN = '7890871059:AAHlDEkfJxsq1bKwqthUBiI1f5dqu8IFavM';
 const CHAT_ID = '6360165707';
+
+// WebSocket connections for real-time communication with web clients
+let webSocketClients: Set<WebSocket> = new Set();
 
 // Bot state with counters
 interface BotState {
@@ -43,8 +47,29 @@ function incrementScrollCount() {
   botState.lastScroll = new Date();
 }
 
-// Initialize bot
-const bot = new TelegramBot(BOT_TOKEN, { polling: true });
+// Initialize bot with better error handling
+let bot: TelegramBot;
+
+try {
+  bot = new TelegramBot(BOT_TOKEN, { 
+    polling: {
+      interval: 2000,
+      autoStart: true,
+      params: {
+        timeout: 10
+      }
+    }
+  });
+  
+  // Handle polling errors
+  bot.on('polling_error', (error) => {
+    console.log('Polling error (will retry):', error.message);
+  });
+  
+} catch (error) {
+  console.log('Bot initialization error:', error);
+  bot = new TelegramBot(BOT_TOKEN, { polling: false });
+}
 
 console.log('🤖 Telegram Bot initialized with token:', BOT_TOKEN.substring(0, 10) + '...');
 
@@ -213,12 +238,74 @@ function stopAutoRefresh() {
 
 // Broadcast to connected clients
 function broadcastToClients(message: any) {
-  // This will be implemented to communicate with the frontend
   console.log('📡 Broadcasting to clients:', message);
+  webSocketClients.forEach(client => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(JSON.stringify(message));
+    }
+  });
+}
+
+// Add WebSocket client
+export function addWebSocketClient(ws: WebSocket) {
+  webSocketClients.add(ws);
+  
+  // Send current state to new client
+  ws.send(JSON.stringify({
+    type: 'bot_state',
+    data: botState
+  }));
+  
+  ws.on('close', () => {
+    webSocketClients.delete(ws);
+  });
+  
+  ws.on('message', (data) => {
+    try {
+      const message = JSON.parse(data.toString());
+      handleWebMessage(message);
+    } catch (error) {
+      console.log('WebSocket message error:', error);
+    }
+  });
+}
+
+// Handle messages from web clients
+function handleWebMessage(message: any) {
+  switch (message.type) {
+    case 'url_changed':
+      botState.currentUrl = message.url;
+      broadcastToClients({
+        type: 'url_updated',
+        url: message.url
+      });
+      break;
+    case 'page_loaded':
+      broadcastToClients({
+        type: 'page_status',
+        status: 'loaded',
+        url: message.url
+      });
+      break;
+    case 'scroll_performed':
+      incrementScrollCount();
+      broadcastToClients({
+        type: 'scroll_update',
+        count: botState.scrollCount
+      });
+      break;
+    case 'refresh_performed':
+      incrementRefreshCount();
+      broadcastToClients({
+        type: 'refresh_update',
+        count: botState.refreshCount
+      });
+      break;
+  }
 }
 
 // Export functions for server integration
-export { botState, startAutoScroll, stopAutoScroll, startAutoRefresh, stopAutoRefresh };
+export { botState, startAutoScroll, stopAutoScroll, startAutoRefresh, stopAutoRefresh, addWebSocketClient, broadcastToClients };
 
 // Status update every 5 minutes when active
 setInterval(() => {
