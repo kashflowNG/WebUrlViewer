@@ -1,4 +1,7 @@
 import TelegramBot from 'node-telegram-bot-api';
+import { db } from './db';
+import { botStats } from '@shared/schema';
+import { eq } from 'drizzle-orm';
 
 // Bot credentials
 const BOT_TOKEN = '7890871059:AAHlDEkfJxsq1bKwqthUBiI1f5dqu8IFavM';
@@ -23,6 +26,52 @@ let botState: BotState = {
 
 let scrollInterval: NodeJS.Timeout | null = null;
 let refreshInterval: NodeJS.Timeout | null = null;
+
+// Database functions
+async function getOrCreateStats() {
+  const [stats] = await db.select().from(botStats).limit(1);
+  if (!stats) {
+    const [newStats] = await db.insert(botStats).values({
+      refreshCount: 0,
+      scrollCount: 0,
+      autoScrollEnabled: false,
+      autoRefreshEnabled: false,
+      refreshInterval: 30,
+      isActive: false
+    }).returning();
+    return newStats;
+  }
+  return stats;
+}
+
+async function updateStats(updates: Partial<typeof botStats.$inferInsert>) {
+  const stats = await getOrCreateStats();
+  const [updatedStats] = await db.update(botStats)
+    .set({ ...updates, lastRefresh: updates.refreshCount ? new Date() : stats.lastRefresh })
+    .where(eq(botStats.id, stats.id))
+    .returning();
+  return updatedStats;
+}
+
+async function incrementRefreshCount() {
+  const stats = await getOrCreateStats();
+  await db.update(botStats)
+    .set({ 
+      refreshCount: (stats.refreshCount || 0) + 1,
+      lastRefresh: new Date()
+    })
+    .where(eq(botStats.id, stats.id));
+}
+
+async function incrementScrollCount() {
+  const stats = await getOrCreateStats();
+  await db.update(botStats)
+    .set({ 
+      scrollCount: (stats.scrollCount || 0) + 1,
+      lastScroll: new Date()
+    })
+    .where(eq(botStats.id, stats.id));
+}
 
 // Initialize bot
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
@@ -148,8 +197,9 @@ bot.onText(/\/stop/, (msg: any) => {
 function startAutoScroll() {
   if (scrollInterval) clearInterval(scrollInterval);
   
-  scrollInterval = setInterval(() => {
+  scrollInterval = setInterval(async () => {
     if (botState.autoScroll && botState.currentUrl) {
+      await incrementScrollCount();
       console.log('🔄 Auto-scroll tick...');
       // This would trigger the scroll in the UI
       broadcastToClients({ type: 'SCROLL_TICK' });
