@@ -280,11 +280,17 @@ function broadcastToClients(message: any) {
 export function addWebSocketClient(ws: WebSocket) {
   webSocketClients.add(ws);
   
-  // Send current state to new client
-  ws.send(JSON.stringify({
+  // Send current state to new client - only send if URL is not empty
+  const stateToSend = {
     type: 'bot_state',
-    data: botState
-  }));
+    data: {
+      ...botState,
+      // Don't override client's URL if bot's URL is empty
+      currentUrl: botState.currentUrl || undefined
+    }
+  };
+  
+  ws.send(JSON.stringify(stateToSend));
   
   ws.on('close', () => {
     webSocketClients.delete(ws);

@@ -15,16 +15,23 @@ interface NavigationState {
 }
 
 export function useUrlNavigation() {
-  const [state, setState] = useState<NavigationState>({
-    currentUrl: "",
-    isLoading: false,
-    canGoBack: false,
-    canGoForward: false,
-    hasError: false,
-    errorMessage: "",
-    connectionStatus: "Ready",
-    history: [],
-    currentIndex: -1
+  const [state, setState] = useState<NavigationState>(() => {
+    // Restore URL from localStorage on initialization
+    const savedUrl = localStorage.getItem('urlViewer_currentUrl') || "";
+    const savedHistory = JSON.parse(localStorage.getItem('urlViewer_history') || '[]');
+    const savedIndex = parseInt(localStorage.getItem('urlViewer_currentIndex') || '-1');
+    
+    return {
+      currentUrl: savedUrl,
+      isLoading: false,
+      canGoBack: savedIndex > 0,
+      canGoForward: savedIndex < savedHistory.length - 1,
+      hasError: false,
+      errorMessage: "",
+      connectionStatus: "Ready",
+      history: savedHistory,
+      currentIndex: savedIndex
+    };
   });
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -53,6 +60,8 @@ export function useUrlNavigation() {
   const loadUrl = useCallback((url: string) => {
     // Handle empty URL (home state)
     if (!url.trim()) {
+      // Only clear if user explicitly requested it (not from bot reconnection)
+      localStorage.setItem('urlViewer_currentUrl', "");
       setState(prev => ({
         ...prev,
         currentUrl: "",
@@ -85,6 +94,11 @@ export function useUrlNavigation() {
         prev.currentIndex
       );
       const navButtons = updateNavigationButtons(newHistory, newIndex);
+
+      // Save to localStorage for persistence
+      localStorage.setItem('urlViewer_currentUrl', normalizedUrl);
+      localStorage.setItem('urlViewer_history', JSON.stringify(newHistory));
+      localStorage.setItem('urlViewer_currentIndex', newIndex.toString());
 
       return {
         ...prev,
