@@ -33,6 +33,10 @@ let botState: BotState = {
   lastScroll: null
 };
 
+// Activity tracking for batched reports
+let activityBuffer: string[] = [];
+let lastReportTime = Date.now();
+
 let scrollInterval: NodeJS.Timeout | null = null;
 let refreshInterval: NodeJS.Timeout | null = null;
 
@@ -45,6 +49,32 @@ function incrementRefreshCount() {
 function incrementScrollCount() {
   botState.scrollCount++;
   botState.lastScroll = new Date();
+}
+
+// Add activity to buffer for batched reporting
+function addActivity(message: string) {
+  activityBuffer.push(`${new Date().toLocaleTimeString()} - ${message}`);
+}
+
+// Send batched activity report every 20 seconds
+function sendBatchedReport() {
+  if (activityBuffer.length > 0 && bot && CHAT_ID) {
+    const report = `📊 Activity Report (Last 20s):
+
+${activityBuffer.join('\n')}
+
+📈 Total Counters:
+🔄 Scrolls: ${botState.scrollCount}
+🔃 Refreshes: ${botState.refreshCount}
+🌐 Current URL: ${botState.currentUrl || 'None'}`;
+
+    bot.sendMessage(CHAT_ID, report).catch(error => {
+      console.log('Report send error (will retry):', error.message);
+    });
+    
+    // Clear buffer after sending
+    activityBuffer = [];
+  }
 }
 
 // Initialize bot with conflict prevention
@@ -308,10 +338,8 @@ function handleWebMessage(message: any) {
         type: 'url_updated',
         url: message.url
       });
-      // Send instant notification to Telegram
-      if (bot && CHAT_ID) {
-        bot.sendMessage(CHAT_ID, `🌐 URL changed to: ${message.url}`);
-      }
+      // Add to activity buffer instead of instant notification
+      addActivity(`🌐 URL changed to: ${message.url}`);
       break;
     case 'page_loaded':
       broadcastToClients({
@@ -319,10 +347,8 @@ function handleWebMessage(message: any) {
         status: 'loaded',
         url: message.url
       });
-      // Send instant notification to Telegram
-      if (bot && CHAT_ID) {
-        bot.sendMessage(CHAT_ID, `✅ Page loaded successfully: ${message.url}`);
-      }
+      // Add to activity buffer instead of instant notification
+      addActivity(`✅ Page loaded: ${message.url}`);
       break;
     case 'scroll_performed':
       incrementScrollCount();
@@ -330,10 +356,8 @@ function handleWebMessage(message: any) {
         type: 'scroll_update',
         count: botState.scrollCount
       });
-      // Send instant notification to Telegram
-      if (bot && CHAT_ID) {
-        bot.sendMessage(CHAT_ID, `🔄 Auto-scroll performed! Total scrolls: ${botState.scrollCount}`);
-      }
+      // Add to activity buffer instead of instant notification
+      addActivity(`🔄 Auto-scroll performed (Total: ${botState.scrollCount})`);
       break;
     case 'refresh_performed':
       incrementRefreshCount();
@@ -341,16 +365,12 @@ function handleWebMessage(message: any) {
         type: 'refresh_update',
         count: botState.refreshCount
       });
-      // Send instant notification to Telegram
-      if (bot && CHAT_ID) {
-        bot.sendMessage(CHAT_ID, `🔃 Page refresh started! Total refreshes: ${botState.refreshCount}`);
-      }
+      // Add to activity buffer instead of instant notification
+      addActivity(`🔃 Page refresh started (Total: ${botState.refreshCount})`);
       break;
     case 'refresh_completed':
-      // Send completion notification to Telegram
-      if (bot && CHAT_ID) {
-        bot.sendMessage(CHAT_ID, `✅ Page refresh completed successfully!`);
-      }
+      // Add to activity buffer instead of instant notification
+      addActivity(`✅ Page refresh completed`);
       break;
   }
 }
@@ -358,16 +378,9 @@ function handleWebMessage(message: any) {
 // Export functions for server integration
 export { botState, startAutoScroll, stopAutoScroll, startAutoRefresh, stopAutoRefresh, broadcastToClients };
 
-// Status update every 5 minutes when active
+// Send batched activity reports every 20 seconds
 setInterval(() => {
-  if (botState.isActive && (botState.autoScroll || botState.autoRefresh)) {
-    const uptimeMessage = `🔥 Still running! 
-🔄 Scroll: ${botState.autoScroll ? 'ON' : 'OFF'}
-🔃 Refresh: ${botState.autoRefresh ? 'ON' : 'OFF'}
-⏰ ${new Date().toLocaleTimeString()}`;
-    
-    bot.sendMessage(CHAT_ID, uptimeMessage);
-  }
-}, 5 * 60 * 1000); // Every 5 minutes
+  sendBatchedReport();
+}, 20 * 1000); // Every 20 seconds
 
 console.log('✅ Telegram Bot fully configured and running!');
