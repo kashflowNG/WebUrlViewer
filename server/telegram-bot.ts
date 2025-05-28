@@ -292,6 +292,7 @@ export function addWebSocketClient(ws: WebSocket) {
   ws.on('message', (data) => {
     try {
       const message = JSON.parse(data.toString());
+      console.log('🔗 Received WebSocket message:', message.type);
       handleWebMessage(message);
     } catch (error) {
       console.log('WebSocket message error:', error);
