@@ -1,5 +1,6 @@
 import TelegramBot from 'node-telegram-bot-api';
 import WebSocket from 'ws';
+import * as HeadlessBrowser from './headless-browser';
 
 // Bot credentials
 const BOT_TOKEN = '7890871059:AAHlDEkfJxsq1bKwqthUBiI1f5dqu8IFavM';
@@ -131,6 +132,11 @@ try {
 
 console.log('🤖 Telegram Bot initialized with token:', BOT_TOKEN.substring(0, 10) + '...');
 
+// Initialize headless browser
+HeadlessBrowser.initializeHeadlessBrowser().catch(error => {
+  console.error('Failed to initialize headless browser:', error);
+});
+
 // Automatically activate the bot (no welcome message to avoid rate limits)
 botState.isActive = true;
 
@@ -220,7 +226,94 @@ bot.onText(/\/stop/, (msg: any) => {
     botState.autoRefresh = false;
     stopAutoScroll();
     stopAutoRefresh();
+    HeadlessBrowser.stopAutoScroll();
+    HeadlessBrowser.stopAutoRefresh();
     bot.sendMessage(CHAT_ID, '⏹️ All automation stopped.');
+  }
+});
+
+// NEW HEADLESS BROWSER COMMANDS
+
+bot.onText(/\/browser_open (.+)/, async (msg: any, match: any) => {
+  const chatId = msg.chat.id.toString();
+  if (chatId === CHAT_ID && match) {
+    try {
+      const url = match[1];
+      await HeadlessBrowser.navigateToUrl(url);
+      bot.sendMessage(CHAT_ID, `🤖 Headless browser opened: ${url}\n\nNow running 24/7 on the server! Use /browser_screenshot to see what's happening.`);
+    } catch (error: any) {
+      bot.sendMessage(CHAT_ID, `❌ Failed to open URL: ${error.message}`);
+    }
+  }
+});
+
+bot.onText(/\/browser_screenshot/, async (msg: any) => {
+  const chatId = msg.chat.id.toString();
+  if (chatId === CHAT_ID) {
+    try {
+      await HeadlessBrowser.takeScreenshot(bot, CHAT_ID);
+    } catch (error: any) {
+      bot.sendMessage(CHAT_ID, `❌ Screenshot failed: ${error.message}`);
+    }
+  }
+});
+
+bot.onText(/\/browser_scroll_on/, (msg: any) => {
+  const chatId = msg.chat.id.toString();
+  if (chatId === CHAT_ID) {
+    HeadlessBrowser.startAutoScroll();
+    bot.sendMessage(CHAT_ID, '🔄 Headless browser auto-scroll enabled! The server will scroll the page automatically every 3 seconds.');
+  }
+});
+
+bot.onText(/\/browser_scroll_off/, (msg: any) => {
+  const chatId = msg.chat.id.toString();
+  if (chatId === CHAT_ID) {
+    HeadlessBrowser.stopAutoScroll();
+    bot.sendMessage(CHAT_ID, '❌ Headless browser auto-scroll disabled.');
+  }
+});
+
+bot.onText(/\/browser_refresh_on/, (msg: any) => {
+  const chatId = msg.chat.id.toString();
+  if (chatId === CHAT_ID) {
+    HeadlessBrowser.startAutoRefresh();
+    bot.sendMessage(CHAT_ID, '🔃 Headless browser auto-refresh enabled! The server will refresh the page automatically.');
+  }
+});
+
+bot.onText(/\/browser_refresh_off/, (msg: any) => {
+  const chatId = msg.chat.id.toString();
+  if (chatId === CHAT_ID) {
+    HeadlessBrowser.stopAutoRefresh();
+    bot.sendMessage(CHAT_ID, '❌ Headless browser auto-refresh disabled.');
+  }
+});
+
+bot.onText(/\/browser_status/, (msg: any) => {
+  const chatId = msg.chat.id.toString();
+  if (chatId === CHAT_ID) {
+    const state = HeadlessBrowser.getHeadlessBrowserState();
+    const status = `🤖 Headless Browser Status:
+
+📱 Active: ${state.isActive ? '✅ YES' : '❌ NO'}
+🌐 URL: ${state.currentUrl || 'None'}
+🔄 Auto-scroll: ${state.autoScroll ? '✅ ON' : '❌ OFF'} 
+🔃 Auto-refresh: ${state.autoRefresh ? '✅ ON' : '❌ OFF'}
+⏱️ Refresh interval: ${state.refreshInterval}s
+📸 Screenshot interval: ${state.screenshotInterval}s
+
+📊 Totals:
+🔄 Scrolls: ${state.totalScrolls}
+🔃 Refreshes: ${state.totalRefreshes}
+📸 Screenshots: ${state.totalScreenshots}
+
+🕐 Last activity:
+📸 Screenshot: ${state.lastScreenshot?.toLocaleTimeString() || 'Never'}
+🔃 Refresh: ${state.lastRefresh?.toLocaleTimeString() || 'Never'}
+🔄 Scroll: ${state.lastScroll?.toLocaleTimeString() || 'Never'}`;
+
+    bot.sendMessage(CHAT_ID, status);
   }
 });
 
