@@ -22,9 +22,18 @@ export default function WebFrame({
   onClear,
   onLoadExample
 }: WebFrameProps) {
-  const [autoScroll, setAutoScroll] = useState(false);
-  const [autoRefresh, setAutoRefresh] = useState(false);
-  const [refreshInterval, setRefreshInterval] = useState(30); // seconds
+  const [autoScroll, setAutoScroll] = useState(() => {
+    const saved = localStorage.getItem('urlViewer_autoScroll');
+    return saved ? JSON.parse(saved) : false;
+  });
+  const [autoRefresh, setAutoRefresh] = useState(() => {
+    const saved = localStorage.getItem('urlViewer_autoRefresh');
+    return saved ? JSON.parse(saved) : false;
+  });
+  const [refreshInterval, setRefreshInterval] = useState(() => {
+    const saved = localStorage.getItem('urlViewer_refreshInterval');
+    return saved ? JSON.parse(saved) : 30;
+  });
   const [scrollOffset, setScrollOffset] = useState(0);
   const [scrollDirection, setScrollDirection] = useState(1); // 1 for down, -1 for up
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -42,6 +51,60 @@ export default function WebFrame({
       window.open(currentUrl, '_blank', 'noopener,noreferrer');
     }
   };
+
+  // Save settings to localStorage when they change
+  useEffect(() => {
+    localStorage.setItem('urlViewer_autoScroll', JSON.stringify(autoScroll));
+  }, [autoScroll]);
+
+  useEffect(() => {
+    localStorage.setItem('urlViewer_autoRefresh', JSON.stringify(autoRefresh));
+  }, [autoRefresh]);
+
+  useEffect(() => {
+    localStorage.setItem('urlViewer_refreshInterval', JSON.stringify(refreshInterval));
+  }, [refreshInterval]);
+
+  // Keep app active in background using wake lock and visibility API
+  useEffect(() => {
+    let wakeLock: any = null;
+
+    const requestWakeLock = async () => {
+      try {
+        if ('wakeLock' in navigator) {
+          wakeLock = await (navigator as any).wakeLock.request('screen');
+          console.log('Screen wake lock activated');
+        }
+      } catch (err) {
+        console.log('Wake lock not supported or failed');
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        // Page is hidden, but keep timers running
+        console.log('Page hidden but keeping auto-features active');
+      } else {
+        // Page is visible again, reactivate wake lock
+        requestWakeLock();
+      }
+    };
+
+    // Request wake lock initially
+    if (autoScroll || autoRefresh) {
+      requestWakeLock();
+    }
+
+    // Listen for visibility changes
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (wakeLock) {
+        wakeLock.release();
+      }
+    };
+  }, [autoScroll, autoRefresh]);
 
   // Auto-scroll functionality - simulates scrolling by moving the viewport
   useEffect(() => {
@@ -204,6 +267,7 @@ export default function WebFrame({
             >
               {autoScroll ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
               <span className="ml-1 text-xs">Scroll</span>
+              {autoScroll && <span className="ml-1 text-[10px] bg-green-500 text-white px-1 rounded">ON</span>}
             </Button>
             
             <Button
@@ -215,6 +279,7 @@ export default function WebFrame({
             >
               <RotateCcw className={`h-4 w-4 ${autoRefresh ? 'animate-spin' : ''}`} />
               <span className="ml-1 text-xs">{refreshInterval}s</span>
+              {autoRefresh && <span className="ml-1 text-[10px] bg-green-500 text-white px-1 rounded">ON</span>}
             </Button>
             
             {autoRefresh && (
