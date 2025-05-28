@@ -1,19 +1,20 @@
 import TelegramBot from 'node-telegram-bot-api';
-import { db } from './db';
-import { botStats } from '@shared/schema';
-import { eq } from 'drizzle-orm';
 
 // Bot credentials
 const BOT_TOKEN = '7890871059:AAHlDEkfJxsq1bKwqthUBiI1f5dqu8IFavM';
 const CHAT_ID = '6360165707';
 
-// Bot state
+// Bot state with counters
 interface BotState {
   autoScroll: boolean;
   autoRefresh: boolean;
   refreshInterval: number;
   currentUrl: string;
   isActive: boolean;
+  refreshCount: number;
+  scrollCount: number;
+  lastRefresh: Date | null;
+  lastScroll: Date | null;
 }
 
 let botState: BotState = {
@@ -21,56 +22,25 @@ let botState: BotState = {
   autoRefresh: false,
   refreshInterval: 30,
   currentUrl: '',
-  isActive: false
+  isActive: false,
+  refreshCount: 0,
+  scrollCount: 0,
+  lastRefresh: null,
+  lastScroll: null
 };
 
 let scrollInterval: NodeJS.Timeout | null = null;
 let refreshInterval: NodeJS.Timeout | null = null;
 
-// Database functions
-async function getOrCreateStats() {
-  const [stats] = await db.select().from(botStats).limit(1);
-  if (!stats) {
-    const [newStats] = await db.insert(botStats).values({
-      refreshCount: 0,
-      scrollCount: 0,
-      autoScrollEnabled: false,
-      autoRefreshEnabled: false,
-      refreshInterval: 30,
-      isActive: false
-    }).returning();
-    return newStats;
-  }
-  return stats;
+// Simple counter functions
+function incrementRefreshCount() {
+  botState.refreshCount++;
+  botState.lastRefresh = new Date();
 }
 
-async function updateStats(updates: Partial<typeof botStats.$inferInsert>) {
-  const stats = await getOrCreateStats();
-  const [updatedStats] = await db.update(botStats)
-    .set({ ...updates, lastRefresh: updates.refreshCount ? new Date() : stats.lastRefresh })
-    .where(eq(botStats.id, stats.id))
-    .returning();
-  return updatedStats;
-}
-
-async function incrementRefreshCount() {
-  const stats = await getOrCreateStats();
-  await db.update(botStats)
-    .set({ 
-      refreshCount: (stats.refreshCount || 0) + 1,
-      lastRefresh: new Date()
-    })
-    .where(eq(botStats.id, stats.id));
-}
-
-async function incrementScrollCount() {
-  const stats = await getOrCreateStats();
-  await db.update(botStats)
-    .set({ 
-      scrollCount: (stats.scrollCount || 0) + 1,
-      lastScroll: new Date()
-    })
-    .where(eq(botStats.id, stats.id));
+function incrementScrollCount() {
+  botState.scrollCount++;
+  botState.lastScroll = new Date();
 }
 
 // Initialize bot
@@ -103,10 +73,9 @@ bot.onText(/\/start/, (msg: any) => {
   }
 });
 
-bot.onText(/\/status/, async (msg: any) => {
+bot.onText(/\/status/, (msg: any) => {
   const chatId = msg.chat.id.toString();
   if (chatId === CHAT_ID) {
-    const stats = await getOrCreateStats();
     const statusMessage = `📊 Current Status:
 
 🔄 Auto-scroll: ${botState.autoScroll ? '✅ ON' : '❌ OFF'}
@@ -115,14 +84,13 @@ bot.onText(/\/status/, async (msg: any) => {
 🌐 Current URL: ${botState.currentUrl || 'None set'}
 🤖 Bot active: ${botState.isActive ? '✅ YES' : '❌ NO'}
 
-📈 Statistics (Persistent Even When Phone is Off):
-🔃 Total Refreshes: ${stats.refreshCount || 0}
-🔄 Total Scrolls: ${stats.scrollCount || 0}
-🕐 Last Refresh: ${stats.lastRefresh ? new Date(stats.lastRefresh).toLocaleString() : 'Never'}
-🕐 Last Scroll: ${stats.lastScroll ? new Date(stats.lastScroll).toLocaleString() : 'Never'}
+📈 Live Counters:
+🔃 Total Refreshes: ${botState.refreshCount}
+🔄 Total Scrolls: ${botState.scrollCount}
+🕐 Last Refresh: ${botState.lastRefresh ? botState.lastRefresh.toLocaleString() : 'Never'}
+🕐 Last Scroll: ${botState.lastScroll ? botState.lastScroll.toLocaleString() : 'Never'}
 
-Keep this bot running for 24/7 automation! 🚀
-Your stats are saved in database and won't reset! 💾`;
+Keep this bot running for 24/7 automation! 🚀`;
     
     bot.sendMessage(CHAT_ID, statusMessage);
   }
@@ -205,9 +173,9 @@ bot.onText(/\/stop/, (msg: any) => {
 function startAutoScroll() {
   if (scrollInterval) clearInterval(scrollInterval);
   
-  scrollInterval = setInterval(async () => {
+  scrollInterval = setInterval(() => {
     if (botState.autoScroll && botState.currentUrl) {
-      await incrementScrollCount();
+      incrementScrollCount();
       console.log('🔄 Auto-scroll tick...');
       // This would trigger the scroll in the UI
       broadcastToClients({ type: 'SCROLL_TICK' });
@@ -226,13 +194,12 @@ function stopAutoScroll() {
 function startAutoRefresh() {
   if (refreshInterval) clearInterval(refreshInterval);
   
-  refreshInterval = setInterval(async () => {
+  refreshInterval = setInterval(() => {
     if (botState.autoRefresh && botState.currentUrl) {
-      await incrementRefreshCount();
+      incrementRefreshCount();
       console.log('🔃 Auto-refresh tick...');
       broadcastToClients({ type: 'REFRESH_TICK' });
-      const stats = await getOrCreateStats();
-      bot.sendMessage(CHAT_ID, `🔃 Page refreshed automatically at ${new Date().toLocaleTimeString()}\n📊 Total refreshes: ${(stats.refreshCount || 0) + 1}`);
+      bot.sendMessage(CHAT_ID, `🔃 Page refreshed automatically at ${new Date().toLocaleTimeString()}\n📊 Total refreshes: ${botState.refreshCount}`);
     }
   }, botState.refreshInterval * 1000);
 }
