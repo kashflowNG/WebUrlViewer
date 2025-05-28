@@ -301,6 +301,7 @@ export function addWebSocketClient(ws: WebSocket) {
 
 // Handle messages from web clients
 function handleWebMessage(message: any) {
+  console.log('📨 Processing web message:', message.type);
   switch (message.type) {
     case 'url_changed':
       botState.currentUrl = message.url;
@@ -310,6 +311,7 @@ function handleWebMessage(message: any) {
       });
       // Add to activity buffer instead of instant notification
       addActivity(`🌐 URL changed to: ${message.url}`);
+      console.log('✅ Added URL change activity to buffer');
       break;
     case 'page_loaded':
       broadcastToClients({
@@ -319,6 +321,7 @@ function handleWebMessage(message: any) {
       });
       // Add to activity buffer instead of instant notification
       addActivity(`✅ Page loaded: ${message.url}`);
+      console.log('✅ Added page load activity to buffer');
       break;
     case 'scroll_performed':
       incrementScrollCount();
