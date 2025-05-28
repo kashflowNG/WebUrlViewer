@@ -61,7 +61,7 @@ function sendBatchedReport() {
   console.log(`📊 Checking batched report - Activities in buffer: ${activityBuffer.length}`);
   
   if (activityBuffer.length > 0 && bot && CHAT_ID) {
-    const report = `📊 Activity Report (Last 20s):
+    const report = `📊 Activity Report (Last 1min):
 
 ${activityBuffer.join('\n')}
 
@@ -73,14 +73,15 @@ ${activityBuffer.join('\n')}
     console.log('📤 Sending batched report to Telegram...');
     bot.sendMessage(CHAT_ID, report).then(() => {
       console.log('✅ Batched report sent successfully!');
+      // Clear buffer after successful send
+      activityBuffer = [];
     }).catch(error => {
       console.log('❌ Report send error:', error.message);
+      // Clear buffer even on error to prevent spam
+      activityBuffer = [];
     });
-    
-    // Clear buffer after sending
-    activityBuffer = [];
   } else if (activityBuffer.length === 0) {
-    console.log('📭 No activities to report in this 20-second window');
+    console.log('📭 No activities to report in this 1-minute window');
   }
 }
 
@@ -352,9 +353,9 @@ function handleWebMessage(message: any) {
 // Export functions for server integration
 export { botState, startAutoScroll, stopAutoScroll, startAutoRefresh, stopAutoRefresh, broadcastToClients };
 
-// Send batched activity reports every 20 seconds
+// Send batched activity reports every 1 minute
 setInterval(() => {
   sendBatchedReport();
-}, 20 * 1000); // Every 20 seconds
+}, 60 * 1000); // Every 1 minute
 
 console.log('✅ Telegram Bot fully configured and running!');
