@@ -1,0 +1,57 @@
+import { useState } from "react";
+import NavigationBar from "@/components/url-viewer/navigation-bar";
+import WebFrame from "@/components/url-viewer/web-frame";
+import StatusBar from "@/components/url-viewer/status-bar";
+import { useUrlNavigation } from "@/hooks/use-url-navigation";
+
+export default function UrlViewer() {
+  const {
+    currentUrl,
+    isLoading,
+    canGoBack,
+    canGoForward,
+    hasError,
+    errorMessage,
+    connectionStatus,
+    loadUrl,
+    goBack,
+    goForward,
+    refresh,
+    clearError,
+    retry
+  } = useUrlNavigation();
+
+  const [urlInput, setUrlInput] = useState("");
+
+  return (
+    <div className="min-h-screen flex flex-col bg-gray-50 font-sans">
+      <NavigationBar
+        currentUrl={currentUrl}
+        urlInput={urlInput}
+        setUrlInput={setUrlInput}
+        isLoading={isLoading}
+        canGoBack={canGoBack}
+        canGoForward={canGoForward}
+        onLoadUrl={loadUrl}
+        onGoBack={goBack}
+        onGoForward={goForward}
+        onRefresh={refresh}
+      />
+      
+      <WebFrame
+        currentUrl={currentUrl}
+        isLoading={isLoading}
+        hasError={hasError}
+        errorMessage={errorMessage}
+        onRetry={retry}
+        onClear={clearError}
+        onLoadExample={loadUrl}
+      />
+      
+      <StatusBar
+        connectionStatus={connectionStatus}
+        currentUrl={currentUrl}
+      />
+    </div>
+  );
+}
