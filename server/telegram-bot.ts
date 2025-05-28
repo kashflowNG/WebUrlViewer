@@ -1,6 +1,6 @@
 import TelegramBot from 'node-telegram-bot-api';
 
-// Hardcoded credentials
+// Bot credentials
 const BOT_TOKEN = '7890871059:AAHlDEkfJxsq1bKwqthUBiI1f5dqu8IFavM';
 const CHAT_ID = '6360165707';
 
