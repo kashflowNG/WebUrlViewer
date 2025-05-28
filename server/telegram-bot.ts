@@ -71,14 +71,14 @@ ${activityBuffer.join('\n')}
 🌐 Current URL: ${botState.currentUrl || 'None'}`;
 
     console.log('📤 Sending batched report to Telegram...');
+    
+    // Clear buffer immediately to prevent duplicate sends
+    activityBuffer = [];
+    
     bot.sendMessage(CHAT_ID, report).then(() => {
       console.log('✅ Batched report sent successfully!');
-      // Clear buffer after successful send
-      activityBuffer = [];
     }).catch(error => {
       console.log('❌ Report send error:', error.message);
-      // Clear buffer even on error to prevent spam
-      activityBuffer = [];
     });
   } else if (activityBuffer.length === 0) {
     console.log('📭 No activities to report in this 1-minute window');
