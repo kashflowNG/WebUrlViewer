@@ -29,46 +29,21 @@ const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 
 console.log('🤖 Telegram Bot initialized with token:', BOT_TOKEN.substring(0, 10) + '...');
 
-// Send welcome message with inline buttons
-const welcomeKeyboard = {
-  inline_keyboard: [
-    [
-      { text: '🚀 Start Bot', callback_data: 'start_bot' },
-      { text: '⏹️ Stop Bot', callback_data: 'stop_bot' }
-    ],
-    [
-      { text: '📊 Status', callback_data: 'status' },
-      { text: '🌐 Set URL', callback_data: 'set_url' }
-    ],
-    [
-      { text: '🔄 Scroll ON', callback_data: 'scroll_on' },
-      { text: '⏸️ Scroll OFF', callback_data: 'scroll_off' }
-    ],
-    [
-      { text: '🔃 Refresh ON', callback_data: 'refresh_on' },
-      { text: '⏹️ Refresh OFF', callback_data: 'refresh_off' }
-    ],
-    [
-      { text: '⏱️ Set Interval', callback_data: 'set_interval' },
-      { text: '🔧 Dashboard', callback_data: 'dashboard' }
-    ]
-  ]
-};
-
+// Send welcome message
 bot.sendMessage(CHAT_ID, `🚀 URL Viewer Bot is now running!
 
-✨ Your smart automation dashboard is ready!
+Available commands:
+/start - Start the bot
+/status - Check current status
+/scroll_on - Enable auto-scroll
+/scroll_off - Disable auto-scroll
+/refresh_on - Enable auto-refresh
+/refresh_off - Disable auto-refresh
+/seturl <url> - Set URL to view
+/setinterval <seconds> - Set refresh interval
+/stop - Stop all automation
 
-🎯 Use the buttons below to control your bot:
-• Start/Stop automation
-• Enable auto-scroll and auto-refresh  
-• Set any website URL
-• Adjust refresh intervals
-• View real-time status
-
-Your bot will keep running 24/7 even when your phone is off! 📱💤`, {
-  reply_markup: welcomeKeyboard
-});
+Your bot will keep running even when your phone is off! 📱💤`);
 
 // Command handlers
 bot.onText(/\/start/, (msg: any) => {

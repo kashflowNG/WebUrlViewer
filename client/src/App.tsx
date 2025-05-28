@@ -4,14 +4,12 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import UrlViewer from "@/pages/url-viewer";
-import Dashboard from "@/pages/dashboard";
 
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Dashboard} />
-      <Route path="/viewer" component={UrlViewer} />
-      <Route path="*" component={Dashboard} />
+      <Route path="/" component={UrlViewer} />
+      <Route path="*" component={UrlViewer} />
     </Switch>
   );
 }
