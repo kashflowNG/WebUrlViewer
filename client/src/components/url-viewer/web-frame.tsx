@@ -22,7 +22,7 @@ export default function WebFrame({
   onRetry,
   onClear,
   onLoadExample,
-  iframeRef
+  iframeRef: externalIframeRef
 }: WebFrameProps) {
   const [autoScroll, setAutoScroll] = useState(() => {
     const saved = localStorage.getItem('urlViewer_autoScroll');
@@ -152,9 +152,9 @@ export default function WebFrame({
   useEffect(() => {
     if (autoRefresh && currentUrl && !isLoading) {
       refreshIntervalRef.current = setInterval(() => {
-        if (iframeRef.current) {
+        if (externalIframeRef?.current) {
           // Reload the iframe
-          iframeRef.current.src = iframeRef.current.src;
+          externalIframeRef.current.src = externalIframeRef.current.src;
         }
       }, refreshInterval * 1000);
     } else {
@@ -313,7 +313,7 @@ export default function WebFrame({
       {/* Web content iframe with scroll simulation */}
       <div className="w-full h-full overflow-hidden">
         <iframe
-          ref={iframeRef}
+          ref={externalIframeRef}
           src={currentUrl}
           className="w-full border-0 bg-white block transition-transform duration-1000 ease-in-out"
           sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-top-navigation"

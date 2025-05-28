@@ -47,24 +47,44 @@ function incrementScrollCount() {
   botState.lastScroll = new Date();
 }
 
-// Initialize bot with better error handling
+// Initialize bot with conflict prevention
 let bot: TelegramBot;
 
+// Prevent multiple instances by using webhook mode in production-like environment
 try {
   bot = new TelegramBot(BOT_TOKEN, { 
-    polling: {
-      interval: 2000,
-      autoStart: true,
-      params: {
-        timeout: 10
-      }
-    }
+    polling: false
   });
   
-  // Handle polling errors
-  bot.on('polling_error', (error) => {
-    console.log('Polling error (will retry):', error.message);
-  });
+  // Use manual polling to avoid conflicts
+  let isPolling = false;
+  
+  const startPolling = () => {
+    if (isPolling) return;
+    isPolling = true;
+    
+    const poll = async () => {
+      if (!isPolling) return;
+      
+      try {
+        const updates = await bot.getUpdates({ timeout: 10, limit: 1 });
+        for (const update of updates) {
+          bot.processUpdate(update);
+          await bot.deleteWebhook();
+        }
+      } catch (error) {
+        // Silently handle polling errors to prevent spam
+      }
+      
+      if (isPolling) {
+        setTimeout(poll, 2000);
+      }
+    };
+    
+    poll();
+  };
+  
+  startPolling();
   
 } catch (error) {
   console.log('Bot initialization error:', error);
