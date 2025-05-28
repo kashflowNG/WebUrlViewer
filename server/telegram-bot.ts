@@ -103,9 +103,10 @@ bot.onText(/\/start/, (msg: any) => {
   }
 });
 
-bot.onText(/\/status/, (msg: any) => {
+bot.onText(/\/status/, async (msg: any) => {
   const chatId = msg.chat.id.toString();
   if (chatId === CHAT_ID) {
+    const stats = await getOrCreateStats();
     const statusMessage = `📊 Current Status:
 
 🔄 Auto-scroll: ${botState.autoScroll ? '✅ ON' : '❌ OFF'}
@@ -114,7 +115,14 @@ bot.onText(/\/status/, (msg: any) => {
 🌐 Current URL: ${botState.currentUrl || 'None set'}
 🤖 Bot active: ${botState.isActive ? '✅ YES' : '❌ NO'}
 
-Keep this bot running for 24/7 automation! 🚀`;
+📈 Statistics (Persistent Even When Phone is Off):
+🔃 Total Refreshes: ${stats.refreshCount || 0}
+🔄 Total Scrolls: ${stats.scrollCount || 0}
+🕐 Last Refresh: ${stats.lastRefresh ? new Date(stats.lastRefresh).toLocaleString() : 'Never'}
+🕐 Last Scroll: ${stats.lastScroll ? new Date(stats.lastScroll).toLocaleString() : 'Never'}
+
+Keep this bot running for 24/7 automation! 🚀
+Your stats are saved in database and won't reset! 💾`;
     
     bot.sendMessage(CHAT_ID, statusMessage);
   }
@@ -218,11 +226,13 @@ function stopAutoScroll() {
 function startAutoRefresh() {
   if (refreshInterval) clearInterval(refreshInterval);
   
-  refreshInterval = setInterval(() => {
+  refreshInterval = setInterval(async () => {
     if (botState.autoRefresh && botState.currentUrl) {
+      await incrementRefreshCount();
       console.log('🔃 Auto-refresh tick...');
       broadcastToClients({ type: 'REFRESH_TICK' });
-      bot.sendMessage(CHAT_ID, `🔃 Page refreshed automatically at ${new Date().toLocaleTimeString()}`);
+      const stats = await getOrCreateStats();
+      bot.sendMessage(CHAT_ID, `🔃 Page refreshed automatically at ${new Date().toLocaleTimeString()}\n📊 Total refreshes: ${(stats.refreshCount || 0) + 1}`);
     }
   }, botState.refreshInterval * 1000);
 }
