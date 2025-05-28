@@ -58,6 +58,8 @@ function addActivity(message: string) {
 
 // Send batched activity report every 20 seconds
 function sendBatchedReport() {
+  console.log(`📊 Checking batched report - Activities in buffer: ${activityBuffer.length}`);
+  
   if (activityBuffer.length > 0 && bot && CHAT_ID) {
     const report = `📊 Activity Report (Last 20s):
 
@@ -68,12 +70,17 @@ ${activityBuffer.join('\n')}
 🔃 Refreshes: ${botState.refreshCount}
 🌐 Current URL: ${botState.currentUrl || 'None'}`;
 
-    bot.sendMessage(CHAT_ID, report).catch(error => {
-      console.log('Report send error (will retry):', error.message);
+    console.log('📤 Sending batched report to Telegram...');
+    bot.sendMessage(CHAT_ID, report).then(() => {
+      console.log('✅ Batched report sent successfully!');
+    }).catch(error => {
+      console.log('❌ Report send error:', error.message);
     });
     
     // Clear buffer after sending
     activityBuffer = [];
+  } else if (activityBuffer.length === 0) {
+    console.log('📭 No activities to report in this 20-second window');
   }
 }
 
@@ -123,60 +130,23 @@ try {
 
 console.log('🤖 Telegram Bot initialized with token:', BOT_TOKEN.substring(0, 10) + '...');
 
-// Automatically activate the bot and send welcome message
+// Automatically activate the bot (no welcome message to avoid rate limits)
 botState.isActive = true;
-
-bot.sendMessage(CHAT_ID, `🚀 URL Viewer Bot is now running and connected to your web view!
-
-🔗 WebSocket connection: ACTIVE
-📊 Current Status: Bot is monitoring your web viewer
-
-Available commands:
-/start - Start the bot
-/status - Check current web view status
-/scroll_on - Enable auto-scroll
-/scroll_off - Disable auto-scroll
-/refresh_on - Enable auto-refresh
-/refresh_off - Disable auto-refresh
-/seturl <url> - Set URL to view
-/setinterval <seconds> - Set refresh interval
-/stop - Stop all automation
-
-Your bot will keep running even when your phone is off! 📱💤`);
 
 // Command handlers
 bot.onText(/\/start/, (msg: any) => {
   const chatId = msg.chat.id.toString();
   if (chatId === CHAT_ID) {
-    bot.sendMessage(CHAT_ID, '✅ Bot started! Ready to control your URL viewer.');
     botState.isActive = true;
+    addActivity('✅ Bot started via Telegram command');
   }
 });
 
 bot.onText(/\/status/, (msg: any) => {
   const chatId = msg.chat.id.toString();
   if (chatId === CHAT_ID) {
-    const connectedClients = webSocketClients.size;
-    const statusMessage = `📊 Web View Status Report:
-
-🔗 WebSocket Connection: ${connectedClients > 0 ? '✅ CONNECTED' : '❌ DISCONNECTED'}
-👥 Connected Clients: ${connectedClients}
-🔄 Auto-scroll: ${botState.autoScroll ? '✅ ON' : '❌ OFF'}
-🔃 Auto-refresh: ${botState.autoRefresh ? '✅ ON' : '❌ OFF'}
-⏱️ Refresh interval: ${botState.refreshInterval} seconds
-🌐 Current URL: ${botState.currentUrl || 'No website loaded yet'}
-🤖 Bot Status: ${botState.isActive ? '✅ ACTIVE & MONITORING' : '❌ INACTIVE'}
-
-📈 Live Activity Counters:
-🔃 Total Refreshes: ${botState.refreshCount}
-🔄 Total Scrolls: ${botState.scrollCount}
-🕐 Last Refresh: ${botState.lastRefresh ? botState.lastRefresh.toLocaleString() : 'Never'}
-🕐 Last Scroll: ${botState.lastScroll ? botState.lastScroll.toLocaleString() : 'Never'}
-
-✨ Your web view is ${connectedClients > 0 ? 'connected and ready' : 'waiting for connection'}!
-Bot will keep running 24/7 even when your phone is off! 🚀`;
-    
-    bot.sendMessage(CHAT_ID, statusMessage);
+    // Just update state, no instant message to avoid rate limits
+    console.log('📊 Status requested - will be included in next 20s report');
   }
 });
 
@@ -185,7 +155,7 @@ bot.onText(/\/scroll_on/, (msg: any) => {
   if (chatId === CHAT_ID) {
     botState.autoScroll = true;
     startAutoScroll();
-    bot.sendMessage(CHAT_ID, '✅ Auto-scroll enabled! Your content will scroll automatically.');
+    addActivity('✅ Auto-scroll enabled via Telegram command');
   }
 });
 
@@ -194,7 +164,7 @@ bot.onText(/\/scroll_off/, (msg: any) => {
   if (chatId === CHAT_ID) {
     botState.autoScroll = false;
     stopAutoScroll();
-    bot.sendMessage(CHAT_ID, '❌ Auto-scroll disabled.');
+    addActivity('❌ Auto-scroll disabled via Telegram command');
   }
 });
 
@@ -203,7 +173,7 @@ bot.onText(/\/refresh_on/, (msg: any) => {
   if (chatId === CHAT_ID) {
     botState.autoRefresh = true;
     startAutoRefresh();
-    bot.sendMessage(CHAT_ID, `✅ Auto-refresh enabled! Page will refresh every ${botState.refreshInterval} seconds.`);
+    addActivity(`✅ Auto-refresh enabled (${botState.refreshInterval}s interval) via Telegram command`);
   }
 });
 
@@ -212,7 +182,7 @@ bot.onText(/\/refresh_off/, (msg: any) => {
   if (chatId === CHAT_ID) {
     botState.autoRefresh = false;
     stopAutoRefresh();
-    bot.sendMessage(CHAT_ID, '❌ Auto-refresh disabled.');
+    addActivity('❌ Auto-refresh disabled via Telegram command');
   }
 });
 
