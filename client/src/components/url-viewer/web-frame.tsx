@@ -25,6 +25,8 @@ export default function WebFrame({
   const [autoScroll, setAutoScroll] = useState(false);
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [refreshInterval, setRefreshInterval] = useState(30); // seconds
+  const [scrollOffset, setScrollOffset] = useState(0);
+  const [scrollDirection, setScrollDirection] = useState(1); // 1 for down, -1 for up
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const scrollIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -41,38 +43,38 @@ export default function WebFrame({
     }
   };
 
-  // Auto-scroll functionality
+  // Auto-scroll functionality - simulates scrolling by moving the viewport
   useEffect(() => {
     if (autoScroll && currentUrl && !isLoading) {
       scrollIntervalRef.current = setInterval(() => {
-        if (iframeRef.current) {
-          try {
-            const iframe = iframeRef.current;
-            const iframeDocument = iframe.contentDocument || iframe.contentWindow?.document;
-            if (iframeDocument) {
-              const scrollHeight = iframeDocument.documentElement.scrollHeight;
-              const currentScroll = iframeDocument.documentElement.scrollTop;
-              const windowHeight = iframeDocument.documentElement.clientHeight;
-              
-              // Scroll down by 100px every 3 seconds
-              if (currentScroll + windowHeight < scrollHeight - 100) {
-                iframeDocument.documentElement.scrollTop += 100;
-              } else {
-                // Scroll back to top when reached bottom
-                iframeDocument.documentElement.scrollTop = 0;
-              }
-            }
-          } catch (error) {
-            // Cross-origin restriction, can't access iframe content
-            console.log('Auto-scroll unavailable due to cross-origin restrictions');
+        setScrollOffset(prev => {
+          const maxOffset = 2000; // Maximum scroll down in pixels
+          const step = 150; // Pixels to scroll each time
+          
+          let newOffset = prev + (step * scrollDirection);
+          let newDirection = scrollDirection;
+          
+          // Change direction when reaching limits
+          if (newOffset >= maxOffset) {
+            newDirection = -1;
+            newOffset = maxOffset;
+          } else if (newOffset <= 0) {
+            newDirection = 1;
+            newOffset = 0;
           }
-        }
-      }, 3000); // Scroll every 3 seconds
+          
+          setScrollDirection(newDirection);
+          return newOffset;
+        });
+      }, 2500); // Scroll every 2.5 seconds
     } else {
       if (scrollIntervalRef.current) {
         clearInterval(scrollIntervalRef.current);
         scrollIntervalRef.current = null;
       }
+      // Reset scroll position when stopping
+      setScrollOffset(0);
+      setScrollDirection(1);
     }
 
     return () => {
@@ -80,7 +82,7 @@ export default function WebFrame({
         clearInterval(scrollIntervalRef.current);
       }
     };
-  }, [autoScroll, currentUrl, isLoading]);
+  }, [autoScroll, currentUrl, isLoading, scrollDirection]);
 
   // Auto-refresh functionality
   useEffect(() => {
@@ -242,16 +244,22 @@ export default function WebFrame({
         </div>
       )}
       
-      {/* Web content iframe */}
-      <iframe
-        ref={iframeRef}
-        src={currentUrl}
-        className="w-full h-full border-0 bg-white block"
-        sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-top-navigation"
-        loading="eager"
-        title="Web Content Viewer"
-        style={{ minHeight: '100%', display: 'block' }}
-      />
+      {/* Web content iframe with scroll simulation */}
+      <div className="w-full h-full overflow-hidden">
+        <iframe
+          ref={iframeRef}
+          src={currentUrl}
+          className="w-full border-0 bg-white block transition-transform duration-1000 ease-in-out"
+          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-top-navigation"
+          loading="eager"
+          title="Web Content Viewer"
+          style={{ 
+            height: 'calc(100% + 2000px)', // Make iframe taller to simulate content
+            transform: `translateY(-${scrollOffset}px)`,
+            display: 'block'
+          }}
+        />
+      </div>
     </main>
   );
 }
