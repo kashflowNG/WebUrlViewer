@@ -99,6 +99,13 @@ export function useUrlNavigation() {
       };
     });
 
+    // Report URL change to bot
+    sendMessage({ 
+      type: 'url_changed', 
+      url: normalizedUrl,
+      timestamp: new Date().toISOString()
+    });
+
     // Simulate loading delay and then mark as loaded
     setTimeout(() => {
       setState(prev => ({
@@ -106,6 +113,13 @@ export function useUrlNavigation() {
         isLoading: false,
         connectionStatus: "Connected"
       }));
+      
+      // Report successful page load to bot
+      sendMessage({ 
+        type: 'page_loaded', 
+        url: normalizedUrl,
+        timestamp: new Date().toISOString()
+      });
     }, 1000);
 
   }, [addToHistory, updateNavigationButtons]);
@@ -179,6 +193,13 @@ export function useUrlNavigation() {
         connectionStatus: "Loading..."
       }));
 
+      // Report refresh start to bot
+      sendMessage({ 
+        type: 'refresh_performed', 
+        url: state.currentUrl,
+        timestamp: new Date().toISOString()
+      });
+
       // Simulate refresh
       setTimeout(() => {
         setState(prev => ({
@@ -186,9 +207,16 @@ export function useUrlNavigation() {
           isLoading: false,
           connectionStatus: "Connected"
         }));
+        
+        // Report refresh complete to bot
+        sendMessage({ 
+          type: 'refresh_completed', 
+          url: state.currentUrl,
+          timestamp: new Date().toISOString()
+        });
       }, 1000);
     }
-  }, [state.currentUrl]);
+  }, [state.currentUrl, sendMessage]);
 
   const clearError = useCallback(() => {
     setState(prev => ({

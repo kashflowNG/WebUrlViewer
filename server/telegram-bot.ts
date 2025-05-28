@@ -308,6 +308,10 @@ function handleWebMessage(message: any) {
         type: 'url_updated',
         url: message.url
       });
+      // Send instant notification to Telegram
+      if (bot && CHAT_ID) {
+        bot.sendMessage(CHAT_ID, `🌐 URL changed to: ${message.url}`);
+      }
       break;
     case 'page_loaded':
       broadcastToClients({
@@ -315,6 +319,10 @@ function handleWebMessage(message: any) {
         status: 'loaded',
         url: message.url
       });
+      // Send instant notification to Telegram
+      if (bot && CHAT_ID) {
+        bot.sendMessage(CHAT_ID, `✅ Page loaded successfully: ${message.url}`);
+      }
       break;
     case 'scroll_performed':
       incrementScrollCount();
@@ -322,6 +330,10 @@ function handleWebMessage(message: any) {
         type: 'scroll_update',
         count: botState.scrollCount
       });
+      // Send instant notification to Telegram
+      if (bot && CHAT_ID) {
+        bot.sendMessage(CHAT_ID, `🔄 Auto-scroll performed! Total scrolls: ${botState.scrollCount}`);
+      }
       break;
     case 'refresh_performed':
       incrementRefreshCount();
@@ -329,6 +341,16 @@ function handleWebMessage(message: any) {
         type: 'refresh_update',
         count: botState.refreshCount
       });
+      // Send instant notification to Telegram
+      if (bot && CHAT_ID) {
+        bot.sendMessage(CHAT_ID, `🔃 Page refresh started! Total refreshes: ${botState.refreshCount}`);
+      }
+      break;
+    case 'refresh_completed':
+      // Send completion notification to Telegram
+      if (bot && CHAT_ID) {
+        bot.sendMessage(CHAT_ID, `✅ Page refresh completed successfully!`);
+      }
       break;
   }
 }
