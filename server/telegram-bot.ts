@@ -253,7 +253,17 @@ bot.onText(/\/browser_open (.+)/, async (msg: any, match: any) => {
   const chatId = msg.chat.id.toString();
   if (chatId === CHAT_ID && match) {
     try {
-      const url = match[1];
+      // Clean up the URL by removing angle brackets and trimming whitespace
+      let url = match[1].trim();
+      if (url.startsWith('<') && url.endsWith('>')) {
+        url = url.slice(1, -1);
+      }
+      
+      // Ensure the URL has a protocol
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        url = 'https://' + url;
+      }
+      
       await HeadlessBrowser.navigateToUrl(url);
       bot.sendMessage(CHAT_ID, `🤖 Headless browser opened: ${url}\n\nNow running 24/7 on the server! Use /browser_screenshot to see what's happening.`);
     } catch (error: any) {
