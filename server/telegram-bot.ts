@@ -86,47 +86,26 @@ ${activityBuffer.join('\n')}
   }
 }
 
-// Initialize bot with conflict prevention
+// Initialize bot with proper polling
 let bot: TelegramBot;
 
-// Prevent multiple instances by using webhook mode in production-like environment
 try {
+  console.log('🔧 Setting up Telegram bot with polling...');
+  
   bot = new TelegramBot(BOT_TOKEN, { 
-    polling: false
+    polling: {
+      interval: 1000,
+      autoStart: true,
+      params: {
+        timeout: 10
+      }
+    }
   });
   
-  // Use manual polling to avoid conflicts
-  let isPolling = false;
-  
-  const startPolling = () => {
-    if (isPolling) return;
-    isPolling = true;
-    
-    const poll = async () => {
-      if (!isPolling) return;
-      
-      try {
-        const updates = await bot.getUpdates({ timeout: 10, limit: 1 });
-        for (const update of updates) {
-          bot.processUpdate(update);
-          await bot.deleteWebHook();
-        }
-      } catch (error) {
-        // Silently handle polling errors to prevent spam
-      }
-      
-      if (isPolling) {
-        setTimeout(poll, 2000);
-      }
-    };
-    
-    poll();
-  };
-  
-  startPolling();
+  console.log('✅ Bot polling enabled successfully!');
   
 } catch (error) {
-  console.log('Bot initialization error:', error);
+  console.log('❌ Bot initialization error:', error);
   bot = new TelegramBot(BOT_TOKEN, { polling: false });
 }
 
