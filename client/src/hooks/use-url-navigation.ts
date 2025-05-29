@@ -276,7 +276,7 @@ export function useUrlNavigation() {
         break;
         
       case 'bot_state':
-        // Update connection status based on bot state
+        // Only update connection status, don't override webview URL
         const botData = lastMessage.data;
         setState(prev => ({
           ...prev,
