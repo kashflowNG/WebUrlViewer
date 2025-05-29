@@ -143,6 +143,8 @@ botState.isActive = true;
 // Command handlers
 bot.onText(/\/start/, (msg: any) => {
   const chatId = msg.chat.id.toString();
+  console.log(`📱 Received /start from chat ID: ${chatId}, expected: ${CHAT_ID}`);
+  
   if (chatId === CHAT_ID) {
     botState.isActive = true;
     addActivity('✅ Bot started via Telegram command');
@@ -177,6 +179,9 @@ bot.onText(/\/start/, (msg: any) => {
 Your browser runs 24/7 on the server! 🔥`;
 
     bot.sendMessage(CHAT_ID, welcomeMessage, { parse_mode: 'Markdown' });
+    console.log('✅ Dashboard sent to Telegram!');
+  } else {
+    console.log(`❌ Unauthorized chat ID: ${chatId}`);
   }
 });
 
