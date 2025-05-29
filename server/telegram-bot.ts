@@ -146,6 +146,37 @@ bot.onText(/\/start/, (msg: any) => {
   if (chatId === CHAT_ID) {
     botState.isActive = true;
     addActivity('✅ Bot started via Telegram command');
+    
+    const welcomeMessage = `🤖 **URL Viewer Bot - Command Dashboard**
+
+🌐 **HEADLESS BROWSER COMMANDS**
+\`/browser_open <URL>\` - Open website in background browser
+\`/browser_screenshot\` - Take screenshot of current page
+\`/browser_status\` - View browser status & activity stats
+
+⚡ **AUTOMATION CONTROLS**
+\`/browser_scroll_on\` - Enable auto-scrolling (every 3s)
+\`/browser_scroll_off\` - Disable auto-scrolling
+\`/browser_refresh_on\` - Enable auto-refresh
+\`/browser_refresh_off\` - Disable auto-refresh
+\`/stop\` - Stop all automation
+
+⚙️ **SETTINGS**
+\`/setinterval <seconds>\` - Set refresh interval (min 5s)
+\`/seturl <URL>\` - Set URL for web interface
+
+📊 **STATUS & INFO**
+\`/status\` - Get detailed activity report
+\`/start\` - Show this command dashboard
+
+🚀 **Quick Start:**
+1. \`/browser_open https://example.com\`
+2. \`/browser_screenshot\` to see the page
+3. \`/browser_scroll_on\` for auto-scrolling
+
+Your browser runs 24/7 on the server! 🔥`;
+
+    bot.sendMessage(CHAT_ID, welcomeMessage, { parse_mode: 'Markdown' });
   }
 });
 
