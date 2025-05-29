@@ -71,7 +71,7 @@ export async function initializeHeadlessBrowser(): Promise<void> {
 }
 
 // Navigate to URL
-export async function navigateToUrl(url: string): Promise<void> {
+export async function navigateToUrl(url: string, bot?: TelegramBot, chatId?: string): Promise<void> {
   if (!page || !browser) {
     throw new Error('Headless browser not initialized');
   }
@@ -91,8 +91,10 @@ export async function navigateToUrl(url: string): Promise<void> {
       startAutoRefresh();
     }
     
-    // Start taking screenshots
-    startScreenshots();
+    // Start taking screenshots if bot is provided
+    if (bot && chatId) {
+      startScreenshots(bot, chatId);
+    }
     
   } catch (error) {
     console.error('❌ Navigation failed:', error);
