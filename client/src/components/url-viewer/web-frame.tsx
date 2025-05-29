@@ -1,7 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Globe, AlertTriangle, ExternalLink, Play, Pause, RotateCcw } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Globe, AlertTriangle, ExternalLink, Play, Pause, RotateCcw, Activity, BarChart3, Clock, MousePointer, Wifi, WifiOff, ChevronDown, ChevronUp } from "lucide-react";
+import { useWebSocket } from "@/hooks/use-websocket";
 
 interface WebFrameProps {
   currentUrl: string;

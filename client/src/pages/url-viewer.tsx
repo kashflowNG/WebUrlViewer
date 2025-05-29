@@ -2,7 +2,9 @@ import { useState } from "react";
 import NavigationBar from "@/components/url-viewer/navigation-bar";
 import WebFrame from "@/components/url-viewer/web-frame";
 import StatusBar from "@/components/url-viewer/status-bar";
+import StatusDashboard from "@/components/url-viewer/status-dashboard";
 import { useUrlNavigation } from "@/hooks/use-url-navigation";
+import { useWebSocket } from "@/hooks/use-websocket";
 
 export default function UrlViewer() {
   const {
