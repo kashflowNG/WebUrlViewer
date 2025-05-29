@@ -1,51 +1,64 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-      --background: 0 0% 100%;
---foreground: 20 14.3% 4.1%;
---muted: 60 4.8% 95.9%;
---muted-foreground: 25 5.3% 44.7%;
---popover: 0 0% 100%;
---popover-foreground: 20 14.3% 4.1%;
---card: 0 0% 100%;
---card-foreground: 20 14.3% 4.1%;
---border: 20 5.9% 90%;
---input: 20 5.9% 90%;
---primary: 207 90% 54%;
---primary-foreground: 211 100% 99%;
---secondary: 60 4.8% 95.9%;
---secondary-foreground: 24 9.8% 10%;
---accent: 60 4.8% 95.9%;
---accent-foreground: 24 9.8% 10%;
---destructive: 0 84.2% 60.2%;
---destructive-foreground: 60 9.1% 97.8%;
---ring: 20 14.3% 4.1%;
---radius: 0.5rem;
-  }
-  .dark {
-      --background: 240 10% 3.9%;
---foreground: 0 0% 98%;
---muted: 240 3.7% 15.9%;
---muted-foreground: 240 5% 64.9%;
---popover: 240 10% 3.9%;
---popover-foreground: 0 0% 98%;
---card: 240 10% 3.9%;
---card-foreground: 0 0% 98%;
---border: 240 3.7% 15.9%;
---input: 240 3.7% 15.9%;
---primary: 207 90% 54%;
---primary-foreground: 211 100% 99%;
---secondary: 240 3.7% 15.9%;
---secondary-foreground: 0 0% 98%;
---accent: 240 3.7% 15.9%;
---accent-foreground: 0 0% 98%;
---destructive: 0 62.8% 30.6%;
---destructive-foreground: 0 0% 98%;
---ring: 240 4.9% 83.9%;
---radius: 0.5rem;
-  }
+  /* Hacker Theme - Dark Cyberpunk Colors */
+  --background: 0 0% 5%; /* Deep black background */
+  --foreground: 120 100% 85%; /* Bright green text */
+  --muted: 0 0% 15%;
+  --muted-foreground: 120 50% 60%;
+  --popover: 0 0% 8%;
+  --popover-foreground: 120 100% 85%;
+  --card: 0 0% 8%; /* Dark card background */
+  --card-foreground: 120 100% 85%;
+  --border: 120 50% 20%; /* Dark green borders */
+  --input: 0 0% 10%;
+  --primary: 120 100% 50%; /* Matrix green */
+  --primary-foreground: 0 0% 5%;
+  --secondary: 180 100% 25%; /* Cyan accent */
+  --secondary-foreground: 0 0% 95%;
+  --accent: 300 100% 50%; /* Purple/magenta accent */
+  --accent-foreground: 0 0% 95%;
+  --destructive: 0 100% 60%; /* Red for errors */
+  --destructive-foreground: 0 0% 95%;
+  --ring: 120 100% 50%;
+  --radius: 0.25rem;
+
+  /* Custom hacker theme variables */
+  --neon-green: 120 100% 50%;
+  --neon-cyan: 180 100% 50%;
+  --neon-purple: 300 100% 50%;
+  --neon-red: 0 100% 60%;
+  --terminal-bg: 0 0% 3%;
+  --code-bg: 0 0% 8%;
+}
+
+.dark {
+  /* Same colors for dark mode (hacker theme is always dark) */
+  --background: 0 0% 5%;
+  --foreground: 120 100% 85%;
+  --muted: 0 0% 15%;
+  --muted-foreground: 120 50% 60%;
+  --popover: 0 0% 8%;
+  --popover-foreground: 120 100% 85%;
+  --card: 0 0% 8%;
+  --card-foreground: 120 100% 85%;
+  --border: 120 50% 20%;
+  --input: 0 0% 10%;
+  --primary: 120 100% 50%;
+  --primary-foreground: 0 0% 5%;
+  --secondary: 180 100% 25%;
+  --secondary-foreground: 0 0% 95%;
+  --accent: 300 100% 50%;
+  --accent-foreground: 0 0% 95%;
+  --destructive: 0 100% 60%;
+  --destructive-foreground: 0 0% 95%;
+  --ring: 120 100% 50%;
+}
 
 @layer base {
   * {
@@ -53,6 +66,92 @@
   }
 
   body {
-    @apply font-sans antialiased bg-background text-foreground;
+    @apply bg-background text-foreground;
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    background: linear-gradient(135deg, hsl(var(--terminal-bg)), hsl(var(--background)));
+  }
+
+  /* Terminal-style scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--terminal-bg));
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--neon-green));
+    border-radius: 4px;
+    box-shadow: 0 0 8px hsl(var(--neon-green));
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--neon-cyan));
+    box-shadow: 0 0 12px hsl(var(--neon-cyan));
+  }
+
+  /* Neon glow effects */
+  .neon-text {
+    text-shadow: 
+      0 0 5px currentColor,
+      0 0 10px currentColor,
+      0 0 15px currentColor,
+      0 0 20px currentColor;
+  }
+
+  .neon-border {
+    border: 1px solid hsl(var(--neon-green));
+    box-shadow: 
+      0 0 5px hsl(var(--neon-green)),
+      inset 0 0 5px hsl(var(--neon-green));
+  }
+
+  .neon-glow {
+    box-shadow: 
+      0 0 5px hsl(var(--primary)),
+      0 0 10px hsl(var(--primary)),
+      0 0 15px hsl(var(--primary));
+  }
+
+  /* Matrix-style background animation */
+  @keyframes matrix-rain {
+    0% { transform: translateY(-100vh); opacity: 1; }
+    100% { transform: translateY(100vh); opacity: 0; }
+  }
+
+  .matrix-bg::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at 50% 50%, 
+      rgba(0, 255, 65, 0.05) 0%, 
+      transparent 50%);
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  /* Terminal prompt styling */
+  .terminal-prompt::before {
+    content: "$ ";
+    color: hsl(var(--neon-green));
+    font-weight: bold;
+  }
+
+  /* Glitch effect for headers */
+  @keyframes glitch {
+    0% { transform: translate(0); }
+    20% { transform: translate(-2px, 2px); }
+    40% { transform: translate(-2px, -2px); }
+    60% { transform: translate(2px, 2px); }
+    80% { transform: translate(2px, -2px); }
+    100% { transform: translate(0); }
+  }
+
+  .glitch:hover {
+    animation: glitch 0.3s infinite;
   }
 }
