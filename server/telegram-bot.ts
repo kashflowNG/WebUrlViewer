@@ -435,9 +435,10 @@ function handleWebMessage(message: any) {
         type: 'url_updated',
         url: message.url
       });
-      // Add to activity buffer instead of instant notification
-      addActivity(`🌐 URL changed to: ${message.url}`);
-      console.log('✅ Added URL change activity to buffer');
+      // Add to activity buffer and send immediate webview report
+      addActivity(`🌐 Webview URL changed to: ${message.url}`);
+      bot.sendMessage(CHAT_ID, `🖥️ **WEBVIEW ACTIVITY**\n\n🌐 URL Changed: ${message.url}\n🕐 Time: ${new Date().toLocaleTimeString()}\n\n💻 Source: Web Interface`, { parse_mode: 'Markdown' });
+      console.log('✅ Added URL change activity to buffer and sent webview report');
       break;
     case 'page_loaded':
       broadcastToClients({
@@ -445,9 +446,10 @@ function handleWebMessage(message: any) {
         status: 'loaded',
         url: message.url
       });
-      // Add to activity buffer instead of instant notification
-      addActivity(`✅ Page loaded: ${message.url}`);
-      console.log('✅ Added page load activity to buffer');
+      // Add to activity buffer and send immediate webview report
+      addActivity(`✅ Webview page loaded: ${message.url}`);
+      bot.sendMessage(CHAT_ID, `🖥️ **WEBVIEW ACTIVITY**\n\n✅ Page Loaded: ${message.url}\n🕐 Time: ${new Date().toLocaleTimeString()}\n\n💻 Source: Web Interface`, { parse_mode: 'Markdown' });
+      console.log('✅ Added page load activity to buffer and sent webview report');
       break;
     case 'scroll_performed':
       incrementScrollCount();
@@ -464,12 +466,14 @@ function handleWebMessage(message: any) {
         type: 'refresh_update',
         count: botState.refreshCount
       });
-      // Add to activity buffer instead of instant notification
-      addActivity(`🔃 Page refresh started (Total: ${botState.refreshCount})`);
+      // Add to activity buffer and send immediate webview report
+      addActivity(`🔃 Webview page refresh started (Total: ${botState.refreshCount})`);
+      bot.sendMessage(CHAT_ID, `🖥️ **WEBVIEW ACTIVITY**\n\n🔃 Page Refresh Started\n📊 Total Refreshes: ${botState.refreshCount}\n🕐 Time: ${new Date().toLocaleTimeString()}\n\n💻 Source: Web Interface`, { parse_mode: 'Markdown' });
       break;
     case 'refresh_completed':
-      // Add to activity buffer instead of instant notification
-      addActivity(`✅ Page refresh completed`);
+      // Add to activity buffer and send immediate webview report
+      addActivity(`✅ Webview page refresh completed`);
+      bot.sendMessage(CHAT_ID, `🖥️ **WEBVIEW ACTIVITY**\n\n✅ Page Refresh Completed\n🕐 Time: ${new Date().toLocaleTimeString()}\n\n💻 Source: Web Interface`, { parse_mode: 'Markdown' });
       break;
   }
 }
