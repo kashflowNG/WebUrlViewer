@@ -41,8 +41,17 @@ export default function WebFrame({
   });
   const [scrollOffset, setScrollOffset] = useState(0);
   const [scrollDirection, setScrollDirection] = useState(1); // 1 for down, -1 for up
+  const [showDashboard, setShowDashboard] = useState(true);
+  const [sessionStartTime] = useState(Date.now());
+  const [uptimeSeconds, setUptimeSeconds] = useState(0);
+  const [totalRefreshes, setTotalRefreshes] = useState(0);
+  const [totalScrolls, setTotalScrolls] = useState(0);
+  const [loadTime, setLoadTime] = useState(0);
   const scrollIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const loadStartTime = useRef<number>(0);
+  
+  const { isConnected, connectionStatus, sendMessage } = useWebSocket();
 
   const exampleUrls = [
     "https://example.com",
@@ -54,6 +63,44 @@ export default function WebFrame({
     if (currentUrl) {
       window.open(currentUrl, '_blank', 'noopener,noreferrer');
     }
+  };
+
+  // Update uptime every second
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setUptimeSeconds(Math.floor((Date.now() - sessionStartTime) / 1000));
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [sessionStartTime]);
+
+  // Track loading time
+  useEffect(() => {
+    if (isLoading) {
+      loadStartTime.current = Date.now();
+    } else {
+      if (loadStartTime.current > 0) {
+        setLoadTime(Date.now() - loadStartTime.current);
+      }
+    }
+  }, [isLoading]);
+
+  const formatUptime = (seconds: number) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    
+    if (hours > 0) {
+      return `${hours}h ${minutes}m ${secs}s`;
+    } else if (minutes > 0) {
+      return `${minutes}m ${secs}s`;
+    } else {
+      return `${secs}s`;
+    }
+  };
+
+  const formatTime = (ms: number) => {
+    return ms < 1000 ? `${ms}ms` : `${(ms / 1000).toFixed(1)}s`;
   };
 
   // Save settings to localStorage when they change
@@ -131,6 +178,17 @@ export default function WebFrame({
           }
           
           setScrollDirection(newDirection);
+          setTotalScrolls(prev => prev + 1);
+          
+          // Send scroll event to WebSocket
+          if (sendMessage) {
+            sendMessage({
+              type: 'scroll_performed',
+              offset: newOffset,
+              direction: newDirection
+            });
+          }
+          
           return newOffset;
         });
       }, 2500); // Scroll every 2.5 seconds
@@ -158,6 +216,16 @@ export default function WebFrame({
         if (externalIframeRef?.current) {
           // Reload the iframe
           externalIframeRef.current.src = externalIframeRef.current.src;
+          setTotalRefreshes(prev => prev + 1);
+          
+          // Send refresh event to WebSocket
+          if (sendMessage) {
+            sendMessage({
+              type: 'refresh_performed',
+              url: currentUrl,
+              timestamp: new Date().toISOString()
+            });
+          }
         }
       }, refreshInterval * 1000);
     } else {
@@ -257,11 +325,129 @@ export default function WebFrame({
 
   // Show iframe with loading overlay
   return (
-    <main className="flex-1 relative overflow-hidden bg-white">
+    <main className="flex-1 relative overflow-hidden bg-black">
+      {/* Status Dashboard */}
+      {currentUrl && !hasError && showDashboard && (
+        <div className="absolute bottom-4 left-4 z-30 w-80">
+          <Card className="bg-black/95 border-green-500/30 backdrop-blur-sm neon-border">
+            <CardContent className="p-3 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <BarChart3 className="w-4 h-4 text-green-400" />
+                  <span className="text-sm font-mono text-green-400">STATUS DASHBOARD</span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowDashboard(!showDashboard)}
+                  className="h-6 w-6 p-0 text-green-400 hover:bg-green-500/10"
+                >
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+              </div>
+              
+              {/* Connection Status */}
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-mono text-green-300">CONNECTION:</span>
+                    <div className="flex items-center gap-1">
+                      {isConnected ? (
+                        <Wifi className="w-3 h-3 text-green-400" />
+                      ) : (
+                        <WifiOff className="w-3 h-3 text-red-400" />
+                      )}
+                      <Badge className={`${isConnected ? 'bg-green-500/20 text-green-400 border-green-500/30' : 'bg-red-500/20 text-red-400 border-red-500/30'} text-xs font-mono px-1 py-0`}>
+                        {isConnected ? 'ONLINE' : 'OFFLINE'}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-mono text-green-300">UPTIME:</span>
+                    <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30 text-xs font-mono px-1 py-0">
+                      {formatUptime(uptimeSeconds)}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+
+              {/* Activity Metrics */}
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div className="bg-green-500/10 border border-green-500/20 rounded p-2">
+                  <div className="flex items-center justify-center gap-1 mb-1">
+                    <RotateCcw className="w-3 h-3 text-green-400" />
+                  </div>
+                  <div className="text-lg font-bold font-mono text-green-400">
+                    {totalRefreshes}
+                  </div>
+                  <div className="text-xs font-mono text-green-600">REFRESH</div>
+                </div>
+                
+                <div className="bg-blue-500/10 border border-blue-500/20 rounded p-2">
+                  <div className="flex items-center justify-center gap-1 mb-1">
+                    <MousePointer className="w-3 h-3 text-blue-400" />
+                  </div>
+                  <div className="text-lg font-bold font-mono text-blue-400">
+                    {totalScrolls}
+                  </div>
+                  <div className="text-xs font-mono text-blue-600">SCROLL</div>
+                </div>
+                
+                <div className="bg-purple-500/10 border border-purple-500/20 rounded p-2">
+                  <div className="flex items-center justify-center gap-1 mb-1">
+                    <Clock className="w-3 h-3 text-purple-400" />
+                  </div>
+                  <div className="text-lg font-bold font-mono text-purple-400">
+                    {formatTime(loadTime)}
+                  </div>
+                  <div className="text-xs font-mono text-purple-600">LOAD</div>
+                </div>
+              </div>
+
+              {/* Auto-Features Status */}
+              <div className="grid grid-cols-2 gap-2">
+                <div className={`flex items-center justify-between p-2 rounded border ${autoScroll ? 'bg-green-500/10 border-green-500/30' : 'bg-gray-500/10 border-gray-500/30'}`}>
+                  <span className="text-xs font-mono text-green-300">SCROLL:</span>
+                  <Badge className={`${autoScroll ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'} text-xs font-mono px-1 py-0`}>
+                    {autoScroll ? 'ON' : 'OFF'}
+                  </Badge>
+                </div>
+                
+                <div className={`flex items-center justify-between p-2 rounded border ${autoRefresh ? 'bg-blue-500/10 border-blue-500/30' : 'bg-gray-500/10 border-gray-500/30'}`}>
+                  <span className="text-xs font-mono text-green-300">REFRESH:</span>
+                  <Badge className={`${autoRefresh ? 'bg-blue-500/20 text-blue-400' : 'bg-gray-500/20 text-gray-400'} text-xs font-mono px-1 py-0`}>
+                    {autoRefresh ? `${refreshInterval}s` : 'OFF'}
+                  </Badge>
+                </div>
+              </div>
+
+              {/* Current Target */}
+              {currentUrl && (
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Globe className="w-3 h-3 text-cyan-400" />
+                    <span className="text-xs font-mono text-cyan-300">TARGET:</span>
+                    {isLoading && (
+                      <div className="w-3 h-3 border border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
+                    )}
+                  </div>
+                  <div className="text-xs font-mono text-cyan-400 truncate bg-cyan-500/10 border border-cyan-500/20 rounded px-2 py-1">
+                    {new URL(currentUrl).hostname}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {/* Auto-control buttons */}
       {currentUrl && !hasError && (
         <div className="absolute top-4 right-4 z-30 flex gap-2">
-          <div className="bg-white/90 backdrop-blur-sm rounded-lg border shadow-lg p-2 flex items-center gap-2">
+          <div className="bg-black/90 backdrop-blur-sm rounded-lg border border-green-500/30 shadow-lg p-2 flex items-center gap-2 neon-border">
             <Button
               variant={autoScroll ? "default" : "outline"}
               size="sm"
