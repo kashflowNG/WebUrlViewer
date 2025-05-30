@@ -417,17 +417,22 @@ export function addWebSocketClient(ws: WebSocket) {
   ws.on('message', (data) => {
     try {
       const message = JSON.parse(data.toString());
-      console.log('🔗 Received WebSocket message:', message.type);
+      if (process.env.VERBOSE_LOGGING === 'true') {
+        console.log('🔗 Received WebSocket message:', message.type);
+      }
       handleWebMessage(message);
     } catch (error) {
-      console.log('WebSocket message error:', error);
+      if (process.env.VERBOSE_LOGGING === 'true') {
+        console.log('WebSocket message error:', error);
+      }
     }
   });
 }
 
 // Handle messages from web clients
 function handleWebMessage(message: any) {
-  console.log('📨 Processing web message:', message.type);
+  const verbose = process.env.VERBOSE_LOGGING === 'true';
+  if (verbose) console.log('📨 Processing web message:', message.type);
   switch (message.type) {
     case 'url_changed':
       botState.currentUrl = message.url;
@@ -458,7 +463,7 @@ function handleWebMessage(message: any) {
         count: botState.scrollCount
       });
       // Add to activity buffer instead of instant notification
-      addActivity(`🔄 Auto-scroll performed (Total: ${botState.scrollCount})`);
+      // addActivity(`🔄 Auto-scroll performed (Total: ${botState.scrollCount})`);
       break;
     case 'refresh_performed':
       incrementRefreshCount();
