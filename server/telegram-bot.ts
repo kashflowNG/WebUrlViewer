@@ -2,9 +2,9 @@ import TelegramBot from 'node-telegram-bot-api';
 import WebSocket from 'ws';
 import * as HeadlessBrowser from './headless-browser';
 
-// Bot credentials
-const BOT_TOKEN = '7890871059:AAHlDEkfJxsq1bKwqthUBiI1f5dqu8IFavM';
-const CHAT_ID = '6360165707';
+// Bot credentials - use environment variables if available, fallback to hardcoded values
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '7890871059:AAHlDEkfJxsq1bKwqthUBiI1f5dqu8IFavM';
+const CHAT_ID = process.env.TELEGRAM_CHAT_ID || '6360165707';
 
 // WebSocket connections for real-time communication with web clients
 let webSocketClients: Set<WebSocket> = new Set();
