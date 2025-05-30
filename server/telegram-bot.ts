@@ -86,38 +86,46 @@ ${activityBuffer.join('\n')}
   }
 }
 
-// Initialize bot with proper polling
+// Initialize bot with proper polling - only in production
 let bot: TelegramBot;
 
-try {
-  console.log('🔧 Setting up Telegram bot with polling...');
-  
-  bot = new TelegramBot(BOT_TOKEN, { 
-    polling: {
-      interval: 1000,
-      autoStart: true,
-      params: {
-        timeout: 10
+// Only initialize bot in production environment
+if (process.env.NODE_ENV === 'production') {
+  try {
+    console.log('🔧 Setting up Telegram bot with polling...');
+    
+    bot = new TelegramBot(BOT_TOKEN, { 
+      polling: {
+        interval: 1000,
+        autoStart: true,
+        params: {
+          timeout: 10
+        }
       }
-    }
+    });
+    
+    console.log('✅ Bot polling enabled successfully!');
+    
+  } catch (error) {
+    console.log('❌ Bot initialization error:', error);
+    bot = new TelegramBot(BOT_TOKEN, { polling: false });
+  }
+
+  console.log('🤖 Telegram Bot initialized with token:', BOT_TOKEN.substring(0, 10) + '...');
+
+  // Initialize headless browser
+  HeadlessBrowser.initializeHeadlessBrowser().catch(error => {
+    console.error('Failed to initialize headless browser:', error);
   });
-  
-  console.log('✅ Bot polling enabled successfully!');
-  
-} catch (error) {
-  console.log('❌ Bot initialization error:', error);
+
+  // Automatically activate the bot (no welcome message to avoid rate limits)
+  botState.isActive = true;
+} else {
+  console.log('🔧 Development mode: Telegram bot disabled');
+  // Create a dummy bot instance to prevent errors
   bot = new TelegramBot(BOT_TOKEN, { polling: false });
+  botState.isActive = false;
 }
-
-console.log('🤖 Telegram Bot initialized with token:', BOT_TOKEN.substring(0, 10) + '...');
-
-// Initialize headless browser
-HeadlessBrowser.initializeHeadlessBrowser().catch(error => {
-  console.error('Failed to initialize headless browser:', error);
-});
-
-// Automatically activate the bot (no welcome message to avoid rate limits)
-botState.isActive = true;
 
 // Command handlers
 bot.onText(/\/start/, (msg: any) => {
