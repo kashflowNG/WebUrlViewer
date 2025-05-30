@@ -386,7 +386,7 @@ function stopAutoRefresh() {
 
 // Broadcast to connected clients
 function broadcastToClients(message: any) {
-  console.log('📡 Broadcasting to clients:', message);
+  // console.log('📡 Broadcasting to clients:', message);
   webSocketClients.forEach(client => {
     if (client.readyState === WebSocket.OPEN) {
       client.send(JSON.stringify(message));
