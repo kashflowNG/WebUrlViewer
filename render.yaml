@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: url-viewer-app
+    env: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - fromGroup: telegram-secrets
+    disk:
+      name: data
+      mountPath: /opt/render/project/data
+      sizeGB: 1
+
+envVarGroups:
+  - name: telegram-secrets
+    envVars:
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_CHAT_ID
+        sync: false
+      - key: DATABASE_URL
+        sync: false
