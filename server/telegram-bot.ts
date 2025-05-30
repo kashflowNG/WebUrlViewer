@@ -27,7 +27,7 @@ let botState: BotState = {
   autoRefresh: false,
   refreshInterval: 30,
   currentUrl: '',
-  isActive: false,
+  isActive: true,
   refreshCount: 0,
   scrollCount: 0,
   lastRefresh: null,
@@ -137,7 +137,7 @@ if (process.env.NODE_ENV === 'production') {
   console.log('🔧 Development mode: Telegram bot disabled');
   // Create a dummy bot instance to prevent errors
   bot = new TelegramBot(BOT_TOKEN, { polling: false });
-  botState.isActive = false;
+  // Keep isActive as true to show connected state in UI
 }
 
 // Command handlers
