@@ -90,9 +90,14 @@ ${activityBuffer.join('\n')}
 let bot: TelegramBot;
 
 // Only initialize bot in production environment
+console.log('🌍 Environment check - NODE_ENV:', process.env.NODE_ENV);
+console.log('🔑 Bot token available:', BOT_TOKEN ? 'Yes' : 'No');
+console.log('🆔 Chat ID available:', CHAT_ID ? 'Yes' : 'No');
+
 if (process.env.NODE_ENV === 'production') {
   try {
     console.log('🔧 Setting up Telegram bot with polling...');
+    console.log('🔑 Using bot token:', BOT_TOKEN.substring(0, 10) + '...');
     
     bot = new TelegramBot(BOT_TOKEN, { 
       polling: {
@@ -105,6 +110,13 @@ if (process.env.NODE_ENV === 'production') {
     });
     
     console.log('✅ Bot polling enabled successfully!');
+    
+    // Test bot connection
+    bot.getMe().then((botInfo) => {
+      console.log('✅ Bot connection verified:', botInfo.username);
+    }).catch((error) => {
+      console.log('❌ Bot connection test failed:', error.message);
+    });
     
   } catch (error) {
     console.log('❌ Bot initialization error:', error);
@@ -120,6 +132,7 @@ if (process.env.NODE_ENV === 'production') {
 
   // Automatically activate the bot (no welcome message to avoid rate limits)
   botState.isActive = true;
+  console.log('🚀 Bot state activated for production');
 } else {
   console.log('🔧 Development mode: Telegram bot disabled');
   // Create a dummy bot instance to prevent errors
