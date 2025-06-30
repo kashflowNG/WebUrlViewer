@@ -2,7 +2,7 @@
 
 ## Overview
 
-This is a full-stack web application that combines a browser-like URL viewer with Telegram bot integration. The application allows users to view websites through an embedded iframe interface while providing automated screenshot and monitoring capabilities via a Telegram bot. The system features a cyberpunk/hacker-themed UI with real-time WebSocket communication between the web interface and Telegram bot.
+This is a full-stack web application that provides a browser-like URL viewer with an embedded iframe interface. The application allows users to view websites through a clean, responsive interface with auto-scroll and auto-refresh capabilities. The system features a cyberpunk/hacker-themed UI with performance monitoring and browser-like navigation controls.
 
 ## System Architecture
 
@@ -20,13 +20,7 @@ This is a full-stack web application that combines a browser-like URL viewer wit
 - **Language**: TypeScript with ES modules
 - **Database**: PostgreSQL with Drizzle ORM
 - **Database Provider**: Neon Database (serverless PostgreSQL)
-- **WebSocket**: Native WebSocket server for real-time communication
-- **External Integrations**: Puppeteer for headless browsing, Telegram Bot API
-
-### Real-time Communication
-- WebSocket server integrated with Express HTTP server
-- Bidirectional communication between web interface and Telegram bot
-- Real-time status updates and command synchronization
+- **Session Management**: Express sessions with PostgreSQL store
 
 ## Key Components
 
@@ -36,34 +30,26 @@ This is a full-stack web application that combines a browser-like URL viewer wit
 - **Status Dashboard**: Real-time metrics display with performance monitoring
 - **Status Bar**: Connection status and security indicators
 
-### Telegram Bot Integration
-- **Headless Browser**: Puppeteer-controlled browser for automated interactions
-- **Screenshot Capture**: Automated screenshot functionality with configurable intervals
-- **Bot Commands**: Full command set for URL navigation and automation control
-- **Activity Tracking**: Comprehensive logging and statistics
-
 ### Database Schema
 - **Users Table**: Basic user management (currently using in-memory storage)
-- **Bot Stats Table**: Tracking bot activity, refresh/scroll counts, and automation settings
+- **Session Storage**: User session persistence and state management
 
 ## Data Flow
 
-1. **User Input**: URL entered in web interface or via Telegram bot commands
-2. **Validation**: URL validation and normalization on both frontend and backend
-3. **Navigation**: iframe navigation with load state tracking
-4. **WebSocket Sync**: Real-time synchronization between web interface and bot
-5. **Automation**: Auto-refresh and auto-scroll with configurable intervals
-6. **Monitoring**: Performance metrics collection and display
-7. **Persistence**: State persistence in localStorage and database
+1. **User Input**: URL entered in web interface navigation bar
+2. **Validation**: URL validation and normalization on frontend
+3. **Navigation**: iframe navigation with load state tracking and browser history
+4. **Automation**: Auto-refresh and auto-scroll with configurable intervals
+5. **Monitoring**: Performance metrics collection and display in status dashboard
+6. **Persistence**: State persistence in localStorage for session continuity
 
 ## External Dependencies
 
 ### Core Dependencies
 - **@neondatabase/serverless**: Serverless PostgreSQL connection
-- **puppeteer**: Headless browser automation
-- **node-telegram-bot-api**: Telegram Bot API integration
 - **drizzle-orm**: Type-safe database ORM
-- **ws**: WebSocket server implementation
+- **express**: Web application framework
+- **express-session**: Session management middleware
 
 ### UI Dependencies
 - **@radix-ui/react-***: Accessible UI component primitives
@@ -82,11 +68,11 @@ This is a full-stack web application that combines a browser-like URL viewer wit
 1. **Frontend Build**: Vite builds React app to `dist/public`
 2. **Backend Build**: esbuild bundles server code to `dist/index.js`
 3. **Static Serving**: Express serves built frontend files
-4. **Environment Variables**: Required for database and Telegram credentials
+4. **Environment Variables**: Required for database connection
 
 ### Production Configuration
 - **Database**: Neon PostgreSQL with connection pooling
-- **Environment Variables**: `DATABASE_URL`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`
+- **Environment Variables**: `DATABASE_URL` for database connection
 - **Port**: Configurable via `PORT` environment variable (default: 5000)
 
 ### Render Deployment
@@ -100,6 +86,8 @@ This is a full-stack web application that combines a browser-like URL viewer wit
 ```
 Changelog:
 - June 30, 2025. Initial setup
+- June 30, 2025. Removed all Telegram bot integration and WebSocket functionality per user request
+- June 30, 2025. Cleaned up dependencies and simplified architecture to pure web-based URL viewer
 ```
 
 ## User Preferences

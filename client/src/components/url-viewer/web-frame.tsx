@@ -3,8 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Globe, AlertTriangle, ExternalLink, Play, Pause, RotateCcw, Activity, BarChart3, Clock, MousePointer, Wifi, WifiOff, ChevronDown, ChevronUp } from "lucide-react";
-import { useWebSocket } from "@/hooks/use-websocket";
+import { Globe, AlertTriangle, ExternalLink, Play, Pause, RotateCcw, Activity, BarChart3, Clock, MousePointer, Wifi, ChevronDown, ChevronUp } from "lucide-react";
 
 interface WebFrameProps {
   currentUrl: string;
@@ -50,8 +49,6 @@ export default function WebFrame({
   const scrollIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const loadStartTime = useRef<number>(0);
-  
-  const { isConnected, connectionStatus, sendMessage } = useWebSocket();
 
   const exampleUrls = [
     "https://example.com",
@@ -99,10 +96,6 @@ export default function WebFrame({
     }
   };
 
-  const formatTime = (ms: number) => {
-    return ms < 1000 ? `${ms}ms` : `${(ms / 1000).toFixed(1)}s`;
-  };
-
   // Save settings to localStorage when they change
   useEffect(() => {
     localStorage.setItem('urlViewer_autoScroll', JSON.stringify(autoScroll));
@@ -116,78 +109,32 @@ export default function WebFrame({
     localStorage.setItem('urlViewer_refreshInterval', JSON.stringify(refreshInterval));
   }, [refreshInterval]);
 
-  // Keep app active in background using wake lock and visibility API
-  useEffect(() => {
-    let wakeLock: any = null;
-
-    const requestWakeLock = async () => {
-      try {
-        if ('wakeLock' in navigator) {
-          wakeLock = await (navigator as any).wakeLock.request('screen');
-          console.log('Screen wake lock activated');
-        }
-      } catch (err) {
-        console.log('Wake lock not supported or failed');
-      }
-    };
-
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        // Page is hidden, but keep timers running
-        console.log('Page hidden but keeping auto-features active');
-      } else {
-        // Page is visible again, reactivate wake lock
-        requestWakeLock();
-      }
-    };
-
-    // Request wake lock initially
-    if (autoScroll || autoRefresh) {
-      requestWakeLock();
-    }
-
-    // Listen for visibility changes
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      if (wakeLock) {
-        wakeLock.release();
-      }
-    };
-  }, [autoScroll, autoRefresh]);
-
-  // Auto-scroll functionality - simulates scrolling by moving the viewport
+  // Auto-scroll functionality
   useEffect(() => {
     if (autoScroll && currentUrl && !isLoading) {
       scrollIntervalRef.current = setInterval(() => {
-        setScrollOffset(prev => {
-          const maxOffset = 2000; // Maximum scroll down in pixels
-          const step = 150; // Pixels to scroll each time
-          
-          let newOffset = prev + (step * scrollDirection);
+        setScrollOffset(prevOffset => {
+          const maxOffset = 2000;
+          const minOffset = 0;
+          let newOffset: number;
           let newDirection = scrollDirection;
-          
-          // Change direction when reaching limits
-          if (newOffset >= maxOffset) {
-            newDirection = -1;
-            newOffset = maxOffset;
-          } else if (newOffset <= 0) {
-            newDirection = 1;
-            newOffset = 0;
+
+          if (scrollDirection === 1) {
+            newOffset = prevOffset + 150;
+            if (newOffset >= maxOffset) {
+              newOffset = maxOffset;
+              newDirection = -1;
+            }
+          } else {
+            newOffset = prevOffset - 150;
+            if (newOffset <= minOffset) {
+              newOffset = minOffset;
+              newDirection = 1;
+            }
           }
           
           setScrollDirection(newDirection);
           setTotalScrolls(prev => prev + 1);
-          
-          // Send scroll event to WebSocket
-          if (sendMessage) {
-            sendMessage({
-              type: 'scroll_performed',
-              offset: newOffset,
-              direction: newDirection
-            });
-          }
           
           return newOffset;
         });
@@ -217,15 +164,6 @@ export default function WebFrame({
           // Reload the iframe
           externalIframeRef.current.src = externalIframeRef.current.src;
           setTotalRefreshes(prev => prev + 1);
-          
-          // Send refresh event to WebSocket
-          if (sendMessage) {
-            sendMessage({
-              type: 'refresh_performed',
-              url: currentUrl,
-              timestamp: new Date().toISOString()
-            });
-          }
         }
       }, refreshInterval * 1000);
     } else {
@@ -240,125 +178,119 @@ export default function WebFrame({
         clearInterval(refreshIntervalRef.current);
       }
     };
-  }, [autoRefresh, currentUrl, isLoading, refreshInterval]);
+  }, [autoRefresh, currentUrl, isLoading, refreshInterval, externalIframeRef]);
 
-  // Cleanup on unmount
+  // Apply scroll offset to iframe when it changes
   useEffect(() => {
-    return () => {
-      if (scrollIntervalRef.current) clearInterval(scrollIntervalRef.current);
-      if (refreshIntervalRef.current) clearInterval(refreshIntervalRef.current);
-    };
-  }, []);
+    if (externalIframeRef?.current && scrollOffset > 0) {
+      try {
+        const iframe = externalIframeRef.current;
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+        if (iframeDoc) {
+          iframeDoc.documentElement.scrollTop = scrollOffset;
+        }
+      } catch (error) {
+        // Cross-origin iframe, can't access content
+        console.log('Auto-scroll applied (cross-origin)');
+      }
+    }
+  }, [scrollOffset, externalIframeRef]);
 
-  // Show welcome state
-  if (!currentUrl && !hasError) {
-    return (
-      <main className="flex-1 relative bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-        <div className="text-center max-w-lg mx-auto px-6">
-          <div className="w-16 h-16 mx-auto mb-6 bg-primary/10 rounded-full flex items-center justify-center">
-            <Globe className="w-8 h-8 text-primary" />
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-3">Welcome to URL Viewer</h1>
-          <p className="text-gray-600 mb-8 text-lg">
-            Enter a URL in the address bar above to start browsing websites in this embedded viewer.
-          </p>
-          
-          <Card className="bg-white shadow-lg">
-            <CardContent className="pt-6">
-              <h3 className="font-semibold text-gray-900 mb-4">Quick Examples:</h3>
-              <div className="space-y-2">
-                {exampleUrls.map((url) => (
-                  <Button
-                    key={url}
-                    variant="ghost"
-                    className="w-full justify-start text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                    onClick={() => onLoadExample(url)}
-                  >
-                    {url}
-                  </Button>
-                ))}
-              </div>
-              <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg text-left">
-                <h4 className="font-medium text-blue-900 mb-2">Quick Start:</h4>
-                <ul className="text-sm text-blue-800 space-y-1">
-                  <li>• Enter any HTTP or HTTPS URL</li>
-                  <li>• Use navigation buttons to go back/forward</li>
-                  <li>• Click refresh to reload the current page</li>
-                  <li>• Works on mobile and desktop devices</li>
-                </ul>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </main>
-    );
-  }
-
-  // Show error state
   if (hasError) {
     return (
-      <main className="flex-1 relative bg-gray-50 flex items-center justify-center">
-        <div className="text-center max-w-md mx-auto px-6">
-          <div className="w-16 h-16 mx-auto mb-6 bg-red-100 rounded-full flex items-center justify-center">
-            <AlertTriangle className="w-8 h-8 text-red-500" />
-          </div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-3">Unable to Load Page</h2>
-          <p className="text-gray-600 mb-6">
-            {errorMessage || "The website could not be displayed. This might be due to security restrictions, network issues, or the site blocking iframe embedding."}
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Button onClick={onRetry} className="bg-primary text-white hover:bg-primary/90">
-              Try Again
-            </Button>
-            <Button variant="outline" onClick={handleOpenExternal}>
-              <ExternalLink className="w-4 h-4 mr-2" />
-              Open in New Tab
-            </Button>
-            <Button variant="outline" onClick={onClear}>
-              Clear URL
-            </Button>
-          </div>
-        </div>
-      </main>
+      <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800 text-white">
+        <Card className="w-full max-w-md mx-4 bg-gray-800 border-red-500/30">
+          <CardContent className="p-6 text-center">
+            <AlertTriangle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2 text-red-400">Connection Error</h3>
+            <p className="text-gray-300 mb-6">{errorMessage}</p>
+            <div className="flex gap-2 justify-center">
+              <Button onClick={onRetry} variant="outline" className="bg-red-600 hover:bg-red-700 text-white border-red-500">
+                Retry
+              </Button>
+              <Button onClick={onClear} variant="ghost" className="text-gray-400 hover:text-white">
+                Clear
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
-  // Show iframe with loading overlay
-  return (
-    <main className="flex-1 relative overflow-hidden bg-black">
-      {/* Status Dashboard */}
-      {currentUrl && !hasError && showDashboard && (
-        <div className="absolute bottom-4 left-4 z-30 w-80">
-          <Card className="bg-black/95 border-green-500/30 backdrop-blur-sm neon-border">
-            <CardContent className="p-3 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <BarChart3 className="w-4 h-4 text-green-400" />
-                  <span className="text-sm font-mono text-green-400">STATUS DASHBOARD</span>
-                </div>
+  if (!currentUrl) {
+    return (
+      <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800 text-white">
+        <Card className="w-full max-w-md mx-4 bg-gray-800 border-gray-600">
+          <CardContent className="p-6 text-center">
+            <Globe className="w-12 h-12 text-blue-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Enter a URL to start browsing</h3>
+            <p className="text-gray-400 mb-6">Try one of these examples:</p>
+            <div className="space-y-2">
+              {exampleUrls.map((url, index) => (
                 <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowDashboard(!showDashboard)}
-                  className="h-6 w-6 p-0 text-green-400 hover:bg-green-500/10"
+                  key={index}
+                  onClick={() => onLoadExample(url)}
+                  variant="outline"
+                  className="w-full bg-gray-700 hover:bg-gray-600 text-white border-gray-600"
                 >
-                  <ChevronDown className="h-3 w-3" />
+                  {url}
                 </Button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex-1 flex flex-col bg-gray-900 text-white relative overflow-hidden">
+      {/* Loading overlay */}
+      {isLoading && (
+        <div className="absolute inset-0 bg-gray-900/90 flex items-center justify-center z-50">
+          <div className="text-center">
+            <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-lg font-semibold">Loading...</p>
+            <Progress value={33} className="w-48 mt-2" />
+          </div>
+        </div>
+      )}
+
+      {/* Status Dashboard - Collapsible */}
+      {showDashboard && (
+        <div className="bg-black/90 border-b border-green-500/30 p-3">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Activity className="w-4 h-4 text-green-400" />
+              <span className="text-sm font-mono text-green-300 font-bold">STATUS DASHBOARD</span>
+            </div>
+            <Button
+              onClick={() => setShowDashboard(false)}
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0 text-green-400 hover:text-green-300 hover:bg-green-500/10"
+            >
+              <ChevronUp className="w-4 h-4" />
+            </Button>
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* System Status */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 mb-2">
+                <BarChart3 className="w-3 h-3 text-green-400" />
+                <span className="text-xs font-mono text-green-300 font-bold">SYSTEM STATUS</span>
               </div>
               
-              {/* Connection Status */}
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-mono text-green-300">CONNECTION:</span>
                     <div className="flex items-center gap-1">
-                      {isConnected ? (
-                        <Wifi className="w-3 h-3 text-green-400" />
-                      ) : (
-                        <WifiOff className="w-3 h-3 text-red-400" />
-                      )}
-                      <Badge className={`${isConnected ? 'bg-green-500/20 text-green-400 border-green-500/30' : 'bg-red-500/20 text-red-400 border-red-500/30'} text-xs font-mono px-1 py-0`}>
-                        {isConnected ? 'ONLINE' : 'OFFLINE'}
+                      <Wifi className="w-3 h-3 text-green-400" />
+                      <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs font-mono px-1 py-0">
+                        ONLINE
                       </Badge>
                     </div>
                   </div>
@@ -383,138 +315,128 @@ export default function WebFrame({
                   <div className="text-lg font-bold font-mono text-green-400">
                     {totalRefreshes}
                   </div>
-                  <div className="text-xs font-mono text-green-600">REFRESH</div>
-                </div>
-                
-                <div className="bg-blue-500/10 border border-blue-500/20 rounded p-2">
-                  <div className="flex items-center justify-center gap-1 mb-1">
-                    <MousePointer className="w-3 h-3 text-blue-400" />
-                  </div>
-                  <div className="text-lg font-bold font-mono text-blue-400">
-                    {totalScrolls}
-                  </div>
-                  <div className="text-xs font-mono text-blue-600">SCROLL</div>
+                  <div className="text-xs text-green-300">REFRESHES</div>
                 </div>
                 
                 <div className="bg-purple-500/10 border border-purple-500/20 rounded p-2">
                   <div className="flex items-center justify-center gap-1 mb-1">
-                    <Clock className="w-3 h-3 text-purple-400" />
+                    <MousePointer className="w-3 h-3 text-purple-400" />
                   </div>
                   <div className="text-lg font-bold font-mono text-purple-400">
-                    {formatTime(loadTime)}
+                    {totalScrolls}
                   </div>
-                  <div className="text-xs font-mono text-purple-600">LOAD</div>
-                </div>
-              </div>
-
-              {/* Auto-Features Status */}
-              <div className="grid grid-cols-2 gap-2">
-                <div className={`flex items-center justify-between p-2 rounded border ${autoScroll ? 'bg-green-500/10 border-green-500/30' : 'bg-gray-500/10 border-gray-500/30'}`}>
-                  <span className="text-xs font-mono text-green-300">SCROLL:</span>
-                  <Badge className={`${autoScroll ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'} text-xs font-mono px-1 py-0`}>
-                    {autoScroll ? 'ON' : 'OFF'}
-                  </Badge>
+                  <div className="text-xs text-purple-300">SCROLLS</div>
                 </div>
                 
-                <div className={`flex items-center justify-between p-2 rounded border ${autoRefresh ? 'bg-blue-500/10 border-blue-500/30' : 'bg-gray-500/10 border-gray-500/30'}`}>
-                  <span className="text-xs font-mono text-green-300">REFRESH:</span>
-                  <Badge className={`${autoRefresh ? 'bg-blue-500/20 text-blue-400' : 'bg-gray-500/20 text-gray-400'} text-xs font-mono px-1 py-0`}>
-                    {autoRefresh ? `${refreshInterval}s` : 'OFF'}
-                  </Badge>
+                <div className="bg-yellow-500/10 border border-yellow-500/20 rounded p-2">
+                  <div className="flex items-center justify-center gap-1 mb-1">
+                    <Clock className="w-3 h-3 text-yellow-400" />
+                  </div>
+                  <div className="text-lg font-bold font-mono text-yellow-400">
+                    {loadTime}ms
+                  </div>
+                  <div className="text-xs text-yellow-300">LOAD TIME</div>
                 </div>
               </div>
+            </div>
 
-              {/* Current Target */}
-              {currentUrl && (
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <Globe className="w-3 h-3 text-cyan-400" />
-                    <span className="text-xs font-mono text-cyan-300">TARGET:</span>
-                    {isLoading && (
-                      <div className="w-3 h-3 border border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
-                    )}
-                  </div>
-                  <div className="text-xs font-mono text-cyan-400 truncate bg-cyan-500/10 border border-cyan-500/20 rounded px-2 py-1">
-                    {new URL(currentUrl).hostname}
-                  </div>
+            {/* Control Panel */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 mb-2">
+                <Activity className="w-3 h-3 text-blue-400" />
+                <span className="text-xs font-mono text-blue-300 font-bold">AUTO CONTROLS</span>
+              </div>
+
+              <div className="space-y-3">
+                {/* Auto Scroll */}
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-mono text-gray-300">AUTO-SCROLL:</span>
+                  <Button
+                    onClick={() => setAutoScroll(!autoScroll)}
+                    variant="ghost"
+                    size="sm"
+                    className={`h-6 px-2 text-xs font-mono ${
+                      autoScroll 
+                        ? 'bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500/30' 
+                        : 'bg-gray-500/20 text-gray-400 border border-gray-500/30 hover:bg-gray-500/30'
+                    }`}
+                  >
+                    {autoScroll ? <Pause className="w-3 h-3 mr-1" /> : <Play className="w-3 h-3 mr-1" />}
+                    {autoScroll ? 'ON' : 'OFF'}
+                  </Button>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      )}
 
-      {/* Auto-control buttons */}
-      {currentUrl && !hasError && (
-        <div className="absolute top-4 right-4 z-30 flex gap-2">
-          <div className="bg-black/90 backdrop-blur-sm rounded-lg border border-green-500/30 shadow-lg p-2 flex items-center gap-2 neon-border">
-            <Button
-              variant={autoScroll ? "default" : "outline"}
-              size="sm"
-              onClick={() => setAutoScroll(!autoScroll)}
-              className="h-8 px-3"
-              title={autoScroll ? "Stop auto-scroll" : "Start auto-scroll"}
-            >
-              {autoScroll ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-              <span className="ml-1 text-xs">Scroll</span>
-              {autoScroll && <span className="ml-1 text-[10px] bg-green-500 text-white px-1 rounded">ON</span>}
-            </Button>
-            
-            <Button
-              variant={autoRefresh ? "default" : "outline"}
-              size="sm"
-              onClick={() => setAutoRefresh(!autoRefresh)}
-              className="h-8 px-3"
-              title={autoRefresh ? "Stop auto-refresh" : "Start auto-refresh"}
-            >
-              <RotateCcw className={`h-4 w-4 ${autoRefresh ? 'animate-spin' : ''}`} />
-              <span className="ml-1 text-xs">{refreshInterval}s</span>
-              {autoRefresh && <span className="ml-1 text-[10px] bg-green-500 text-white px-1 rounded">ON</span>}
-            </Button>
-            
-            {autoRefresh && (
-              <select
-                value={refreshInterval}
-                onChange={(e) => setRefreshInterval(Number(e.target.value))}
-                className="text-xs border rounded px-1 py-1 bg-white"
-                title="Refresh interval"
-              >
-                <option value={10}>10s</option>
-                <option value={30}>30s</option>
-                <option value={60}>1m</option>
-                <option value={300}>5m</option>
-              </select>
-            )}
+                {/* Auto Refresh */}
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-mono text-gray-300">AUTO-REFRESH:</span>
+                  <Button
+                    onClick={() => setAutoRefresh(!autoRefresh)}
+                    variant="ghost"
+                    size="sm"
+                    className={`h-6 px-2 text-xs font-mono ${
+                      autoRefresh 
+                        ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30 hover:bg-blue-500/30' 
+                        : 'bg-gray-500/20 text-gray-400 border border-gray-500/30 hover:bg-gray-500/30'
+                    }`}
+                  >
+                    {autoRefresh ? <Pause className="w-3 h-3 mr-1" /> : <Play className="w-3 h-3 mr-1" />}
+                    {autoRefresh ? 'ON' : 'OFF'}
+                  </Button>
+                </div>
+
+                {/* Refresh Interval */}
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-mono text-gray-300">INTERVAL:</span>
+                  <select
+                    value={refreshInterval}
+                    onChange={(e) => setRefreshInterval(Number(e.target.value))}
+                    className="bg-gray-800 border border-gray-600 rounded px-2 py-1 text-xs text-white"
+                  >
+                    <option value={15}>15s</option>
+                    <option value={30}>30s</option>
+                    <option value={60}>1m</option>
+                    <option value={300}>5m</option>
+                  </select>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Loading overlay */}
-      {isLoading && (
-        <div className="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center z-20">
-          <div className="text-center">
-            <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4" />
-            <p className="text-gray-600">Loading page...</p>
-          </div>
-        </div>
+      {/* Collapsed Dashboard Toggle */}
+      {!showDashboard && (
+        <Button
+          onClick={() => setShowDashboard(true)}
+          variant="ghost"
+          size="sm"
+          className="absolute top-2 right-2 z-40 h-8 w-8 p-0 bg-black/50 text-green-400 hover:text-green-300 hover:bg-green-500/10 border border-green-500/30"
+        >
+          <ChevronDown className="w-4 h-4" />
+        </Button>
       )}
-      
-      {/* Web content iframe with scroll simulation */}
-      <div className="w-full h-full overflow-hidden">
+
+      {/* External Link Button */}
+      <Button
+        onClick={handleOpenExternal}
+        variant="ghost"
+        size="sm"
+        className="absolute top-2 left-2 z-40 h-8 px-3 bg-black/50 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 border border-blue-500/30"
+      >
+        <ExternalLink className="w-3 h-3 mr-1" />
+        <span className="text-xs font-mono">OPEN</span>
+      </Button>
+
+      {/* Iframe Container */}
+      <div className="flex-1 bg-white">
         <iframe
           ref={externalIframeRef}
           src={currentUrl}
-          className="w-full border-0 bg-white block transition-transform duration-1000 ease-in-out"
-          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-top-navigation"
-          loading="eager"
-          title="Web Content Viewer"
-          style={{ 
-            height: 'calc(100% + 2000px)', // Make iframe taller to simulate content
-            transform: `translateY(-${scrollOffset}px)`,
-            display: 'block'
-          }}
+          className="w-full h-full border-0"
+          title="URL Viewer"
+          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
         />
       </div>
-    </main>
+    </div>
   );
 }

@@ -1,6 +1,5 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef } from "react";
 import { validateUrl, normalizeUrl } from "@/lib/url-utils";
-import { useWebSocket } from "./use-websocket";
 
 interface NavigationState {
   currentUrl: string;
@@ -35,9 +34,6 @@ export function useUrlNavigation() {
   });
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  
-  // WebSocket connection to Telegram bot
-  const { isConnected, lastMessage, connectionStatus: wsStatus, sendMessage } = useWebSocket();
 
   const updateNavigationButtons = useCallback((history: string[], index: number) => {
     return {
@@ -60,7 +56,6 @@ export function useUrlNavigation() {
   const loadUrl = useCallback((url: string) => {
     // Handle empty URL (home state)
     if (!url.trim()) {
-      // Only clear if user explicitly requested it (not from bot reconnection)
       localStorage.setItem('urlViewer_currentUrl', "");
       setState(prev => ({
         ...prev,
@@ -113,27 +108,13 @@ export function useUrlNavigation() {
       };
     });
 
-    // Report URL change to bot
-    sendMessage({ 
-      type: 'url_changed', 
-      url: normalizedUrl,
-      timestamp: new Date().toISOString()
-    });
-
     // Simulate loading delay and then mark as loaded
     setTimeout(() => {
       setState(prev => ({
         ...prev,
         isLoading: false,
-        connectionStatus: "Connected"
+        connectionStatus: "Ready"
       }));
-      
-      // Report successful page load to bot
-      sendMessage({ 
-        type: 'page_loaded', 
-        url: normalizedUrl,
-        timestamp: new Date().toISOString()
-      });
     }, 1000);
 
   }, [addToHistory, updateNavigationButtons]);
@@ -145,35 +126,9 @@ export function useUrlNavigation() {
         const url = prev.history[newIndex];
         const navButtons = updateNavigationButtons(prev.history, newIndex);
         
-        return {
-          ...prev,
-          currentUrl: url,
-          currentIndex: newIndex,
-          isLoading: true,
-          hasError: false,
-          connectionStatus: "Loading...",
-          ...navButtons
-        };
-      }
-      return prev;
-    });
-
-    // Simulate loading
-    setTimeout(() => {
-      setState(prev => ({
-        ...prev,
-        isLoading: false,
-        connectionStatus: "Connected"
-      }));
-    }, 500);
-  }, [updateNavigationButtons]);
-
-  const goForward = useCallback(() => {
-    setState(prev => {
-      if (prev.currentIndex < prev.history.length - 1) {
-        const newIndex = prev.currentIndex + 1;
-        const url = prev.history[newIndex];
-        const navButtons = updateNavigationButtons(prev.history, newIndex);
+        // Save to localStorage
+        localStorage.setItem('urlViewer_currentUrl', url);
+        localStorage.setItem('urlViewer_currentIndex', newIndex.toString());
         
         return {
           ...prev,
@@ -193,7 +148,41 @@ export function useUrlNavigation() {
       setState(prev => ({
         ...prev,
         isLoading: false,
-        connectionStatus: "Connected"
+        connectionStatus: "Ready"
+      }));
+    }, 500);
+  }, [updateNavigationButtons]);
+
+  const goForward = useCallback(() => {
+    setState(prev => {
+      if (prev.currentIndex < prev.history.length - 1) {
+        const newIndex = prev.currentIndex + 1;
+        const url = prev.history[newIndex];
+        const navButtons = updateNavigationButtons(prev.history, newIndex);
+        
+        // Save to localStorage
+        localStorage.setItem('urlViewer_currentUrl', url);
+        localStorage.setItem('urlViewer_currentIndex', newIndex.toString());
+        
+        return {
+          ...prev,
+          currentUrl: url,
+          currentIndex: newIndex,
+          isLoading: true,
+          hasError: false,
+          connectionStatus: "Loading...",
+          ...navButtons
+        };
+      }
+      return prev;
+    });
+
+    // Simulate loading
+    setTimeout(() => {
+      setState(prev => ({
+        ...prev,
+        isLoading: false,
+        connectionStatus: "Ready"
       }));
     }, 500);
   }, [updateNavigationButtons]);
@@ -207,30 +196,16 @@ export function useUrlNavigation() {
         connectionStatus: "Loading..."
       }));
 
-      // Report refresh start to bot
-      sendMessage({ 
-        type: 'refresh_performed', 
-        url: state.currentUrl,
-        timestamp: new Date().toISOString()
-      });
-
       // Simulate refresh
       setTimeout(() => {
         setState(prev => ({
           ...prev,
           isLoading: false,
-          connectionStatus: "Connected"
+          connectionStatus: "Ready"
         }));
-        
-        // Report refresh complete to bot
-        sendMessage({ 
-          type: 'refresh_completed', 
-          url: state.currentUrl,
-          timestamp: new Date().toISOString()
-        });
       }, 1000);
     }
-  }, [state.currentUrl, sendMessage]);
+  }, [state.currentUrl]);
 
   const clearError = useCallback(() => {
     setState(prev => ({
@@ -248,52 +223,6 @@ export function useUrlNavigation() {
     }
   }, [state.currentUrl, loadUrl]);
 
-  // Handle Telegram bot commands
-  useEffect(() => {
-    if (!lastMessage) return;
-
-    switch (lastMessage.type) {
-      case 'scroll':
-        // Auto scroll when commanded by Telegram bot
-        if (iframeRef.current) {
-          try {
-            const iframe = iframeRef.current;
-            const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
-            if (iframeDoc) {
-              iframeDoc.documentElement.scrollTop += 300;
-              sendMessage({ type: 'scroll_performed' });
-            }
-          } catch (error) {
-            console.log('Auto-scroll from bot command');
-            sendMessage({ type: 'scroll_performed' });
-          }
-        }
-        break;
-        
-      case 'refresh':
-        // Auto refresh when commanded by Telegram bot
-        refresh();
-        break;
-        
-      case 'bot_state':
-        // Only update connection status, don't override webview URL
-        const botData = lastMessage.data;
-        setState(prev => ({
-          ...prev,
-          connectionStatus: `Bot: ${botData.isActive ? 'Active' : 'Inactive'} | Auto-scroll: ${botData.autoScroll ? 'ON' : 'OFF'} | Auto-refresh: ${botData.autoRefresh ? 'ON' : 'OFF'}`
-        }));
-        break;
-    }
-  }, [lastMessage]);
-
-  // Update connection status based on WebSocket state
-  useEffect(() => {
-    setState(prev => ({
-      ...prev,
-      connectionStatus: wsStatus
-    }));
-  }, [wsStatus, isConnected]);
-
   return {
     currentUrl: state.currentUrl,
     isLoading: state.isLoading,
@@ -308,7 +237,6 @@ export function useUrlNavigation() {
     refresh,
     clearError,
     retry,
-    iframeRef, // Export iframe ref for WebSocket commands
-    isConnectedToBot: isConnected
+    iframeRef
   };
 }
