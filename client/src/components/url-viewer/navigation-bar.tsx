@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, ArrowRight, RotateCcw, Globe, ArrowRight as GoArrow, Home, Settings, AlertTriangle } from "lucide-react";
+import { ArrowLeft, ArrowRight, RotateCw, Globe, Search, Home, Bookmark } from "lucide-react";
 import { validateUrl, normalizeUrl } from "@/lib/url-utils";
 
 interface NavigationBarProps {
@@ -55,137 +55,125 @@ export default function NavigationBar({
     onLoadUrl(normalized);
   };
 
-  const handleInputChange = (value: string) => {
-    setUrlInput(value);
-    if (urlError) {
-      setUrlError("");
-    }
-  };
+  const exampleSites = [
+    { name: "Google", url: "https://google.com" },
+    { name: "Wikipedia", url: "https://wikipedia.org" },
+    { name: "GitHub", url: "https://github.com" },
+    { name: "Stack Overflow", url: "https://stackoverflow.com" }
+  ];
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleLoadUrl();
-    }
-  };
-
-  const handleHome = () => {
-    setUrlInput("");
-    setUrlError("");
-    onLoadUrl("");
-  };
-
-  const getUrlIcon = () => {
-    if (urlError) {
-      return <AlertTriangle className="h-4 w-4 text-red-400" />;
-    }
-    if (currentUrl.startsWith('https://')) {
-      return <Globe className="h-4 w-4 text-cyan-500" />;
-    }
-    return <Globe className="h-4 w-4 text-gray-400" />;
+  const handleExampleLoad = (url: string) => {
+    setUrlInput(url);
+    onLoadUrl(url);
   };
 
   return (
-    <header className="bg-black/95 border-b border-purple-500/30 shadow-lg backdrop-blur-sm neon-border">
-      <div className="flex items-center px-4 py-3 gap-3">
-        {/* Navigation Controls */}
+    <div className="space-y-4">
+      {/* Navigation Controls */}
+      <div className="flex items-center gap-3">
         <div className="flex items-center gap-2">
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
-            className="h-8 w-8 p-0 bg-black/50 border border-purple-500/30 hover:bg-purple-500/20 hover:border-purple-400 neon-glow disabled:opacity-30"
-            disabled={!canGoBack}
             onClick={onGoBack}
-            title="Go back"
+            disabled={!canGoBack}
+            className="w-10 h-10 p-0"
           >
-            <ArrowLeft className="h-5 w-5 text-purple-400" />
+            <ArrowLeft className="w-4 h-4" />
           </Button>
-
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
-            className="h-8 w-8 p-0 bg-black/50 border border-purple-500/30 hover:bg-purple-500/20 hover:border-purple-400 neon-glow disabled:opacity-30"
-            disabled={!canGoForward}
             onClick={onGoForward}
-            title="Go forward"
+            disabled={!canGoForward}
+            className="w-10 h-10 p-0"
           >
-            <ArrowRight className="h-5 w-5 text-purple-400" />
+            <ArrowRight className="w-4 h-4" />
           </Button>
-
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
-            className="h-8 w-8 p-0 bg-black/50 border border-purple-500/30 hover:bg-purple-500/20 hover:border-purple-400 neon-glow"
             onClick={onRefresh}
-            title="Refresh page"
+            disabled={isLoading}
+            className="w-10 h-10 p-0"
           >
-            <RotateCcw className={`h-5 w-5 text-purple-400 transition-transform ${isLoading ? 'animate-spin' : ''}`} />
+            <RotateCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
           </Button>
         </div>
 
         {/* URL Input */}
-        <div className="flex-1 max-w-4xl mx-auto">
-          <form onSubmit={handleUrlSubmit} className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              {getUrlIcon()}
+        <form onSubmit={handleUrlSubmit} className="flex-1 flex gap-2">
+          <div className="flex-1 relative">
+            <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+              <Globe className="w-4 h-4 text-muted-foreground" />
             </div>
-
             <Input
-              type="url"
+              type="text"
+              placeholder="Enter URL or search..."
               value={urlInput}
-              onChange={(e) => handleInputChange(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="$ ./target_url --access https://example.com"
-              className="w-full pl-10 pr-12 py-3 text-sm font-mono bg-black/60 border-cyan-500/50 text-cyan-300 placeholder:text-cyan-600/60 focus:border-cyan-400 focus:ring-cyan-400/30 neon-border"
-              autoComplete="url"
-              spellCheck={false}
+              onChange={(e) => {
+                setUrlInput(e.target.value);
+                setUrlError("");
+              }}
+              className="pl-10 url-input h-12"
+              disabled={isLoading}
             />
-
+          </div>
+          <Button 
+            type="submit" 
+            disabled={isLoading}
+            className="modern-button h-12 px-6"
+          >
             {isLoading ? (
-              <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                <div className="animate-spin h-4 w-4 border-2 border-cyan-400 border-t-transparent rounded-full" />
-              </div>
+              <div className="modern-spinner w-4 h-4" />
             ) : (
-              <Button
-                type="submit"
-                variant="ghost"
-                size="sm"
-                className="absolute inset-y-0 right-0 pr-3 h-auto hover:bg-purple-500/20 text-purple-400 hover:text-purple-300"
-              >
-                <GoArrow className="h-4 w-4 transition-colors" />
-              </Button>
+              <>
+                <Search className="w-4 h-4 mr-2" />
+                Go
+              </>
             )}
-          </form>
-
-          {urlError && (
-            <div className="mt-2 text-sm text-red-400 flex items-center gap-2 neon-text">
-              <AlertTriangle className="w-4 h-4" />
-              <span className="font-mono">ERROR: {urlError}</span>
-            </div>
-          )}
-        </div>
-
-        {/* Additional Controls */}
-        <div className="flex items-center gap-2 md:flex hidden">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 p-0 bg-black/50 border border-purple-500/30 hover:bg-purple-500/20 hover:border-purple-400 neon-glow"
-            onClick={handleHome}
-            title="Home"
-          >
-            <Home className="h-5 w-5 text-purple-400" />
           </Button>
-
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 p-0 bg-black/50 border border-cyan-500/30 hover:bg-cyan-500/20 hover:border-cyan-400 neon-glow"
-            title="Settings"
-          >
-            <Settings className="h-5 w-5 text-cyan-400" />
-          </Button>
-        </div>
+        </form>
       </div>
-    </header>
+
+      {/* Error Message */}
+      {urlError && (
+        <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+          <p className="text-sm text-destructive">{urlError}</p>
+        </div>
+      )}
+
+      {/* Current URL Display */}
+      {currentUrl && (
+        <div className="p-3 bg-muted/50 rounded-lg">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+            <span className="text-sm text-muted-foreground">Currently viewing:</span>
+            <span className="text-sm font-mono text-foreground truncate">{currentUrl}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Quick Access */}
+      {!currentUrl && (
+        <div className="space-y-3">
+          <p className="text-sm font-medium text-muted-foreground">Quick Access</p>
+          <div className="grid grid-cols-2 gap-2">
+            {exampleSites.map((site) => (
+              <Button
+                key={site.name}
+                variant="outline"
+                size="sm"
+                onClick={() => handleExampleLoad(site.url)}
+                className="justify-start h-10"
+              >
+                <Bookmark className="w-3 h-3 mr-2" />
+                {site.name}
+              </Button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
