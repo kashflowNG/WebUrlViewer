@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Globe, AlertTriangle, ExternalLink, Play, Pause, RotateCcw, Activity, BarChart3, Clock, MousePointer, Wifi, ChevronDown, ChevronUp } from "lucide-react";
+import { Globe, AlertTriangle, ExternalLink, Play, Pause, RotateCcw, Activity, BarChart3, Clock, MousePointer, Wifi, ChevronDown, ChevronUp, DollarSign, TrendingUp } from "lucide-react";
+import { useEarnings } from "@/hooks/use-earnings";
 
 interface WebFrameProps {
   currentUrl: string;
@@ -38,6 +39,16 @@ export default function WebFrame({
     const saved = localStorage.getItem('urlViewer_refreshInterval');
     return saved ? JSON.parse(saved) : 30;
   });
+
+  // Earnings tracking integration
+  const { 
+    user, 
+    recordEarning, 
+    updateStats, 
+    getEarningsRate, 
+    getEarningsPerHour,
+    flashEarning 
+  } = useEarnings();
   const [scrollOffset, setScrollOffset] = useState(0);
   const [scrollDirection, setScrollDirection] = useState(1); // 1 for down, -1 for up
   const [showDashboard, setShowDashboard] = useState(true);
@@ -156,7 +167,7 @@ export default function WebFrame({
     };
   }, [autoScroll, currentUrl, isLoading, scrollDirection]);
 
-  // Auto-refresh functionality
+  // Auto-refresh functionality with earnings tracking
   useEffect(() => {
     if (autoRefresh && currentUrl && !isLoading) {
       refreshIntervalRef.current = setInterval(() => {
@@ -164,6 +175,18 @@ export default function WebFrame({
           // Reload the iframe
           externalIframeRef.current.src = externalIframeRef.current.src;
           setTotalRefreshes(prev => prev + 1);
+          
+          // Record earnings for this refresh
+          recordEarning(refreshInterval);
+          
+          // Update stats
+          updateStats({
+            refreshCount: totalRefreshes + 1,
+            autoRefreshEnabled: true,
+            refreshInterval: refreshInterval,
+            lastRefresh: new Date().toISOString(),
+            currentUrl: currentUrl,
+          });
         }
       }, refreshInterval * 1000);
     } else {
@@ -178,7 +201,7 @@ export default function WebFrame({
         clearInterval(refreshIntervalRef.current);
       }
     };
-  }, [autoRefresh, currentUrl, isLoading, refreshInterval, externalIframeRef]);
+  }, [autoRefresh, currentUrl, isLoading, refreshInterval, externalIframeRef, recordEarning, updateStats, totalRefreshes]);
 
   // Apply scroll offset to iframe when it changes
   useEffect(() => {
