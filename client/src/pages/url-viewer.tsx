@@ -71,7 +71,7 @@ export default function UrlViewer() {
             onGoForward={goForward}
             onRefresh={refresh}
           />
-          
+
           <WebFrame
             currentUrl={currentUrl}
             isLoading={isLoading}
@@ -82,7 +82,7 @@ export default function UrlViewer() {
             onLoadExample={loadUrl}
             iframeRef={iframeRef}
           />
-          
+
           <StatusBar
             connectionStatus={connectionStatus}
             currentUrl={currentUrl}

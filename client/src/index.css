@@ -1,63 +1,66 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  /* Money Machine Theme - Green/Gold */
-  --background: 120 20% 8%; /* Dark green background */
-  --foreground: 45 100% 85%; /* Gold text */
-  --muted: 120 15% 15%;
-  --muted-foreground: 120 30% 60%;
-  --popover: 120 25% 12%;
-  --popover-foreground: 45 100% 85%;
-  --card: 120 25% 10%; /* Dark green cards */
-  --card-foreground: 45 100% 85%;
-  --border: 120 40% 25%; /* Green borders */
-  --input: 120 20% 15%;
-  --primary: 45 100% 60%; /* Gold primary */
-  --primary-foreground: 120 25% 10%;
-  --secondary: 120 60% 25%; /* Money green */
-  --secondary-foreground: 45 100% 95%;
-  --accent: 120 80% 35%; /* Profit green */
-  --accent-foreground: 120 25% 10%;
-  --destructive: 0 100% 60%; /* Red for errors */
+  /* Cyberpunk/Neon Theme - Blues, Purples, Cyans */
+  --background: 240 10% 6%; /* Deep dark blue-black */
+  --foreground: 200 100% 90%; /* Bright cyan-white */
+  --muted: 240 15% 12%;
+  --muted-foreground: 240 30% 65%;
+  --popover: 240 20% 8%;
+  --popover-foreground: 200 100% 90%;
+  --card: 240 15% 8%; /* Dark blue cards */
+  --card-foreground: 200 100% 90%;
+  --border: 260 40% 25%; /* Purple borders */
+  --input: 240 20% 12%;
+  --primary: 280 100% 70%; /* Electric purple */
+  --primary-foreground: 240 15% 8%;
+  --secondary: 200 100% 60%; /* Bright cyan */
+  --secondary-foreground: 240 15% 8%;
+  --accent: 300 100% 65%; /* Neon magenta */
+  --accent-foreground: 240 15% 8%;
+  --destructive: 0 100% 65%; /* Neon red */
   --destructive-foreground: 0 0% 95%;
-  --ring: 45 100% 60%;
-  --radius: 0.5rem;
+  --ring: 280 100% 70%;
+  --radius: 0.75rem;
 
-  /* Money theme variables */
-  --money-gold: 45 100% 60%;
-  --money-green: 120 60% 45%;
-  --money-dark-green: 120 40% 15%;
-  --profit-green: 120 80% 35%;
-  --earning-flash: 45 100% 70%;
-  --success-green: 120 100% 40%;
+  /* Custom theme variables */
+  --neon-purple: 280 100% 70%;
+  --neon-cyan: 200 100% 60%;
+  --neon-pink: 320 100% 65%;
+  --electric-blue: 220 100% 60%;
+  --cyber-green: 140 100% 50%;
+  --dark-surface: 240 15% 10%;
+  --glass-bg: 240 20% 8%;
 }
 
 .dark {
-  /* Enhanced dark theme for money machine */
-  --background: 120 30% 5%;
-  --foreground: 45 100% 90%;
-  --muted: 120 20% 12%;
-  --muted-foreground: 120 25% 65%;
-  --popover: 120 30% 8%;
-  --popover-foreground: 45 100% 90%;
-  --card: 120 30% 8%;
-  --card-foreground: 45 100% 90%;
-  --border: 120 35% 20%;
-  --input: 120 25% 12%;
-  --primary: 45 100% 65%;
-  --primary-foreground: 120 30% 8%;
-  --secondary: 120 70% 30%;
-  --secondary-foreground: 45 100% 95%;
-  --accent: 120 90% 40%;
-  --accent-foreground: 120 30% 8%;
-  --destructive: 0 100% 60%;
+  /* Enhanced dark cyberpunk theme */
+  --background: 240 15% 4%;
+  --foreground: 200 100% 95%;
+  --muted: 240 20% 10%;
+  --muted-foreground: 240 25% 70%;
+  --popover: 240 25% 6%;
+  --popover-foreground: 200 100% 95%;
+  --card: 240 20% 6%;
+  --card-foreground: 200 100% 95%;
+  --border: 260 45% 20%;
+  --input: 240 25% 10%;
+  --primary: 280 100% 75%;
+  --primary-foreground: 240 20% 6%;
+  --secondary: 200 100% 65%;
+  --secondary-foreground: 240 20% 6%;
+  --accent: 300 100% 70%;
+  --accent-foreground: 240 20% 6%;
+  --destructive: 0 100% 70%;
   --destructive-foreground: 0 0% 95%;
-  --ring: 45 100% 65%;
+  --ring: 280 100% 75%;
 }
 
 @layer base {
@@ -67,166 +70,296 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
-    background: linear-gradient(135deg, 
-      hsl(var(--background)), 
-      hsl(120 25% 6%), 
-      hsl(var(--background)));
+    font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+    background: radial-gradient(ellipse at top, 
+      hsl(240 20% 8%), 
+      hsl(240 15% 4%), 
+      hsl(240 10% 2%));
+    background-attachment: fixed;
   }
 
-  /* Money-themed scrollbar */
+  /* Cyberpunk scrollbar */
   ::-webkit-scrollbar {
-    width: 8px;
+    width: 10px;
   }
 
   ::-webkit-scrollbar-track {
-    background: hsl(var(--money-dark-green));
+    background: hsl(var(--dark-surface));
+    border-radius: 5px;
   }
 
   ::-webkit-scrollbar-thumb {
-    background: hsl(var(--money-gold));
-    border-radius: 4px;
-    box-shadow: 0 0 8px hsl(var(--money-gold) / 0.5);
+    background: linear-gradient(45deg, hsl(var(--neon-purple)), hsl(var(--neon-cyan)));
+    border-radius: 5px;
+    box-shadow: 0 0 15px hsl(var(--neon-purple) / 0.5);
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--profit-green));
-    box-shadow: 0 0 12px hsl(var(--profit-green) / 0.7);
+    background: linear-gradient(45deg, hsl(var(--neon-cyan)), hsl(var(--neon-pink)));
+    box-shadow: 0 0 20px hsl(var(--neon-cyan) / 0.7);
   }
 }
 
 @layer components {
-  /* Money glow effects */
-  .money-glow {
+  /* Neon glow effects */
+  .neon-glow {
     box-shadow: 
-      0 0 10px hsl(var(--money-gold) / 0.3),
-      0 0 20px hsl(var(--money-gold) / 0.2),
-      0 0 30px hsl(var(--money-gold) / 0.1);
+      0 0 10px hsl(var(--neon-purple) / 0.4),
+      0 0 20px hsl(var(--neon-purple) / 0.3),
+      0 0 40px hsl(var(--neon-purple) / 0.2);
   }
 
-  .profit-glow {
+  .cyber-glow {
     box-shadow: 
-      0 0 10px hsl(var(--profit-green) / 0.4),
-      0 0 20px hsl(var(--profit-green) / 0.3);
+      0 0 15px hsl(var(--neon-cyan) / 0.5),
+      0 0 30px hsl(var(--neon-cyan) / 0.3);
   }
 
   .earning-flash {
-    animation: earning-flash 0.8s ease-out;
+    animation: cyber-flash 1s ease-out;
   }
 
-  @keyframes earning-flash {
+  @keyframes cyber-flash {
     0% { 
-      background-color: hsl(var(--earning-flash) / 0.2);
+      background: linear-gradient(45deg, hsl(var(--neon-cyan) / 0.2), hsl(var(--neon-purple) / 0.2));
       transform: scale(1);
+      box-shadow: 0 0 20px hsl(var(--neon-cyan) / 0.5);
     }
     50% { 
-      background-color: hsl(var(--earning-flash) / 0.4);
+      background: linear-gradient(45deg, hsl(var(--neon-cyan) / 0.4), hsl(var(--neon-purple) / 0.4));
       transform: scale(1.02);
+      box-shadow: 0 0 30px hsl(var(--neon-cyan) / 0.7);
     }
     100% { 
-      background-color: transparent;
+      background: transparent;
       transform: scale(1);
+      box-shadow: none;
     }
   }
 
-  .money-counter {
-    font-family: 'Orbitron', 'Courier New', monospace;
-    font-weight: 700;
-    text-shadow: 0 0 10px hsl(var(--money-gold) / 0.5);
-    color: hsl(var(--money-gold));
-  }
-
-  .profit-counter {
-    font-family: 'Orbitron', 'Courier New', monospace;
+  .cyber-counter {
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
     font-weight: 600;
-    text-shadow: 0 0 8px hsl(var(--profit-green) / 0.6);
-    color: hsl(var(--profit-green));
+    text-shadow: 0 0 15px hsl(var(--neon-cyan) / 0.8);
+    color: hsl(var(--neon-cyan));
+    letter-spacing: 0.5px;
   }
 
-  .money-gradient {
+  .neon-counter {
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    font-weight: 600;
+    text-shadow: 0 0 15px hsl(var(--neon-purple) / 0.8);
+    color: hsl(var(--neon-purple));
+    letter-spacing: 0.5px;
+  }
+
+  .glass-surface {
     background: linear-gradient(135deg, 
-      hsl(var(--money-dark-green)), 
-      hsl(var(--money-green)),
-      hsl(var(--money-dark-green)));
+      hsl(var(--glass-bg) / 0.8), 
+      hsl(var(--dark-surface) / 0.6));
+    backdrop-filter: blur(12px);
+    border: 1px solid hsl(var(--neon-purple) / 0.2);
   }
 
-  .gold-gradient {
+  .cyber-gradient {
     background: linear-gradient(135deg, 
-      hsl(var(--money-gold)), 
-      hsl(45 100% 70%),
-      hsl(var(--money-gold)));
+      hsl(var(--neon-purple)), 
+      hsl(var(--neon-cyan)),
+      hsl(var(--neon-pink)));
   }
 
-  .earning-pulse {
-    animation: earning-pulse 2s ease-in-out infinite;
+  .electric-pulse {
+    animation: electric-pulse 2.5s ease-in-out infinite;
   }
 
-  @keyframes earning-pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.8; transform: scale(1.05); }
+  @keyframes electric-pulse {
+    0%, 100% { 
+      opacity: 1; 
+      transform: scale(1);
+      box-shadow: 0 0 20px hsl(var(--neon-purple) / 0.4);
+    }
+    50% { 
+      opacity: 0.9; 
+      transform: scale(1.03);
+      box-shadow: 0 0 30px hsl(var(--neon-cyan) / 0.6);
+    }
   }
 
-  /* Money machine button styles */
-  .money-button {
-    background: linear-gradient(135deg, hsl(var(--money-gold)), hsl(45 100% 70%));
-    border: 2px solid hsl(var(--money-gold));
-    color: hsl(var(--money-dark-green));
+  /* Cyberpunk button styles */
+  .cyber-button {
+    background: linear-gradient(135deg, hsl(var(--neon-purple)), hsl(var(--neon-cyan)));
+    border: 2px solid transparent;
+    color: hsl(var(--background));
     font-weight: 600;
     text-shadow: none;
     transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
   }
 
-  .money-button:hover {
-    background: linear-gradient(135deg, hsl(45 100% 70%), hsl(var(--money-gold)));
-    box-shadow: 0 0 20px hsl(var(--money-gold) / 0.4);
-    transform: translateY(-1px);
+  .cyber-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, hsl(var(--neon-cyan) / 0.4), transparent);
+    transition: left 0.5s ease;
   }
 
-  .profit-button {
-    background: linear-gradient(135deg, hsl(var(--profit-green)), hsl(120 90% 40%));
-    border: 2px solid hsl(var(--profit-green));
-    color: hsl(var(--money-dark-green));
+  .cyber-button:hover::before {
+    left: 100%;
+  }
+
+  .cyber-button:hover {
+    background: linear-gradient(135deg, hsl(var(--neon-cyan)), hsl(var(--neon-pink)));
+    box-shadow: 
+      0 0 25px hsl(var(--neon-cyan) / 0.5),
+      0 0 50px hsl(var(--neon-purple) / 0.3);
+    transform: translateY(-2px);
+  }
+
+  .electric-button {
+    background: linear-gradient(135deg, hsl(var(--electric-blue)), hsl(var(--cyber-green)));
+    border: 2px solid hsl(var(--electric-blue));
+    color: hsl(var(--background));
     font-weight: 600;
   }
 
-  .profit-button:hover {
-    background: linear-gradient(135deg, hsl(120 90% 40%), hsl(var(--profit-green)));
-    box-shadow: 0 0 20px hsl(var(--profit-green) / 0.4);
+  .electric-button:hover {
+    background: linear-gradient(135deg, hsl(var(--cyber-green)), hsl(var(--electric-blue)));
+    box-shadow: 0 0 25px hsl(var(--electric-blue) / 0.5);
+    transform: translateY(-1px);
   }
 
-  /* Dashboard card styles */
-  .earnings-card {
-    background: hsl(var(--card));
-    border: 1px solid hsl(var(--money-green) / 0.3);
-    box-shadow: 0 4px 12px hsl(var(--money-dark-green) / 0.3);
+  /* Glass card styles */
+  .cyber-card {
+    background: linear-gradient(135deg, 
+      hsl(var(--glass-bg) / 0.9), 
+      hsl(var(--dark-surface) / 0.7));
+    backdrop-filter: blur(15px);
+    border: 1px solid hsl(var(--neon-purple) / 0.3);
+    box-shadow: 
+      0 8px 32px hsl(var(--background) / 0.3),
+      inset 0 1px 0 hsl(var(--neon-cyan) / 0.1);
   }
 
-  .earnings-card:hover {
-    border-color: hsl(var(--money-gold) / 0.5);
-    box-shadow: 0 8px 25px hsl(var(--money-dark-green) / 0.4);
+  .cyber-card:hover {
+    border-color: hsl(var(--neon-cyan) / 0.5);
+    box-shadow: 
+      0 12px 40px hsl(var(--background) / 0.4),
+      0 0 25px hsl(var(--neon-purple) / 0.2);
+    transform: translateY(-2px);
   }
 
   /* Status indicators */
   .status-online {
-    color: hsl(var(--profit-green));
-    text-shadow: 0 0 8px hsl(var(--profit-green) / 0.6);
+    color: hsl(var(--cyber-green));
+    text-shadow: 0 0 10px hsl(var(--cyber-green) / 0.8);
   }
 
   .status-earning {
-    color: hsl(var(--money-gold));
-    text-shadow: 0 0 8px hsl(var(--money-gold) / 0.6);
+    color: hsl(var(--neon-cyan));
+    text-shadow: 0 0 10px hsl(var(--neon-cyan) / 0.8);
   }
 
-  /* Loading spinner for money theme */
-  .money-spinner {
-    border: 3px solid hsl(var(--money-dark-green));
-    border-top: 3px solid hsl(var(--money-gold));
+  .status-inactive {
+    color: hsl(var(--muted-foreground));
+    text-shadow: none;
+  }
+
+  /* Loading spinner */
+  .cyber-spinner {
+    border: 3px solid hsl(var(--dark-surface));
+    border-top: 3px solid hsl(var(--neon-purple));
+    border-right: 3px solid hsl(var(--neon-cyan));
     border-radius: 50%;
-    animation: money-spin 1s linear infinite;
+    animation: cyber-spin 1.2s linear infinite;
   }
 
-  @keyframes money-spin {
+  @keyframes cyber-spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+  }
+
+  /* Holographic text effect */
+  .holo-text {
+    background: linear-gradient(45deg, 
+      hsl(var(--neon-purple)), 
+      hsl(var(--neon-cyan)), 
+      hsl(var(--neon-pink)),
+      hsl(var(--electric-blue)));
+    background-size: 300% 300%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: holo-shift 3s ease-in-out infinite;
+  }
+
+  @keyframes holo-shift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  /* Neon border animation */
+  .neon-border {
+    position: relative;
+    border: 1px solid hsl(var(--neon-purple) / 0.3);
+  }
+
+  .neon-border::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: -1px;
+    right: -1px;
+    bottom: -1px;
+    background: linear-gradient(45deg, 
+      hsl(var(--neon-purple)), 
+      hsl(var(--neon-cyan)), 
+      hsl(var(--neon-pink)),
+      hsl(var(--neon-purple)));
+    background-size: 200% 200%;
+    border-radius: inherit;
+    z-index: -1;
+    animation: neon-border-glow 3s linear infinite;
+    opacity: 0.6;
+  }
+
+  @keyframes neon-border-glow {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  /* Matrix-style text */
+  .matrix-text {
+    font-family: 'JetBrains Mono', monospace;
+    color: hsl(var(--cyber-green));
+    text-shadow: 0 0 10px hsl(var(--cyber-green) / 0.7);
+    letter-spacing: 1px;
+  }
+
+  /* Glitch effect */
+  .glitch {
+    animation: glitch 2s infinite;
+  }
+
+  @keyframes glitch {
+    0%, 90%, 100% {
+      transform: translate(0);
+    }
+    20% {
+      transform: translate(-2px, 2px);
+    }
+    40% {
+      transform: translate(-2px, -2px);
+    }
+    60% {
+      transform: translate(2px, 2px);
+    }
+    80% {
+      transform: translate(2px, -2px);
+    }
   }
 }

@@ -48,7 +48,7 @@ export default function StatusDashboard({
   const [uptimeSeconds, setUptimeSeconds] = useState(0);
   const [avgLoadTime, setAvgLoadTime] = useState(0);
   const [totalActions, setTotalActions] = useState(0);
-  
+
   const { isConnected, connectionStatus } = useWebSocket();
 
   // Update uptime every second
@@ -64,7 +64,7 @@ export default function StatusDashboard({
   useEffect(() => {
     const total = performanceMetrics.refreshCount + performanceMetrics.scrollCount;
     setTotalActions(total);
-    
+
     if (performanceMetrics.refreshCount > 0) {
       setAvgLoadTime(performanceMetrics.loadTime / performanceMetrics.refreshCount);
     }
@@ -74,7 +74,7 @@ export default function StatusDashboard({
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
-    
+
     if (hours > 0) {
       return `${hours}h ${minutes}m ${secs}s`;
     } else if (minutes > 0) {
@@ -120,7 +120,7 @@ export default function StatusDashboard({
             </Button>
           </div>
         </CardHeader>
-        
+
         <CardContent className="pt-0 space-y-3">
           {/* System Status Row */}
           <div className="grid grid-cols-2 gap-2">
@@ -139,7 +139,7 @@ export default function StatusDashboard({
                 </div>
               </div>
             </div>
-            
+
             <div className="space-y-1">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-mono text-green-300">UPTIME:</span>
@@ -177,7 +177,7 @@ export default function StatusDashboard({
               </div>
               <div className="text-xs font-mono text-green-600">REFRESH</div>
             </div>
-            
+
             <div className="bg-blue-500/10 border border-blue-500/20 rounded p-2">
               <div className="flex items-center justify-center gap-1 mb-1">
                 <MousePointer className="w-3 h-3 text-blue-400" />
@@ -187,7 +187,7 @@ export default function StatusDashboard({
               </div>
               <div className="text-xs font-mono text-blue-600">SCROLL</div>
             </div>
-            
+
             <div className="bg-purple-500/10 border border-purple-500/20 rounded p-2">
               <div className="flex items-center justify-center gap-1 mb-1">
                 <TrendingUp className="w-3 h-3 text-purple-400" />
@@ -211,7 +211,7 @@ export default function StatusDashboard({
                   {autoScroll ? 'ON' : 'OFF'}
                 </Badge>
               </div>
-              
+
               <div className={`flex items-center justify-between p-2 rounded border ${autoRefresh ? 'bg-blue-500/10 border-blue-500/30' : 'bg-gray-500/10 border-gray-500/30'}`}>
                 <span className="text-xs font-mono text-green-300">REFRESH:</span>
                 <Badge className={`${autoRefresh ? 'bg-blue-500/20 text-blue-400' : 'bg-gray-500/20 text-gray-400'} text-xs font-mono px-1 py-0`}>
@@ -226,7 +226,7 @@ export default function StatusDashboard({
             <div className="space-y-3 pt-3 border-t border-green-500/20">
               <div className="space-y-2">
                 <span className="text-xs font-mono text-cyan-300">PERFORMANCE METRICS:</span>
-                
+
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-mono text-gray-300">Last Load Time:</span>
@@ -234,14 +234,14 @@ export default function StatusDashboard({
                       {formatTime(performanceMetrics.loadTime)}
                     </span>
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-mono text-gray-300">Avg Load Time:</span>
                     <span className="text-xs font-mono text-cyan-400">
                       {formatTime(avgLoadTime)}
                     </span>
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-mono text-gray-300">Total Actions:</span>
                     <span className="text-xs font-mono text-cyan-400">
@@ -254,7 +254,7 @@ export default function StatusDashboard({
               {/* System Resources */}
               <div className="space-y-2">
                 <span className="text-xs font-mono text-orange-300">SYSTEM STATUS:</span>
-                
+
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-mono text-gray-300">WebSocket:</span>
@@ -262,14 +262,14 @@ export default function StatusDashboard({
                       {connectionStatus.toUpperCase()}
                     </Badge>
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-mono text-gray-300">Session:</span>
                     <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs font-mono px-1 py-0">
                       ACTIVE
                     </Badge>
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-mono text-gray-300">Wake Lock:</span>
                     <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30 text-xs font-mono px-1 py-0">
