@@ -103,7 +103,7 @@ export default function EarningsDashboard() {
     );
   }
 
-  const totalEarnings = parseFloat(user?.totalEarnings || "0");
+  const totalEarnings = user?.totalEarnings || 0;
   const refreshInterval = stats?.refreshInterval || 30;
   const earningsPerHour = getEarningsPerHour(refreshInterval);
   const earningsRate = getEarningsRate(refreshInterval);
@@ -370,7 +370,7 @@ export default function EarningsDashboard() {
                         paddingAngle={5}
                         dataKey="value"
                       >
-                        {pieData.map((entry, index) => (
+                        {pieData.map((entry: any, index: number) => (
                           <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
                       </Pie>

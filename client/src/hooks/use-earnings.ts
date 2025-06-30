@@ -1,113 +1,99 @@
 import { useState, useEffect, useCallback } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-
-interface UserStats {
-  id: number;
-  userId: number;
-  currentUrl: string | null;
-  refreshCount: number;
-  scrollCount: number;
-  autoScrollEnabled: boolean;
-  autoRefreshEnabled: boolean;
-  refreshInterval: number;
-  lastRefresh: string | null;
-  lastScroll: string | null;
-  isActive: boolean;
-  sessionStartTime: string;
-  updatedAt: string;
-}
-
-interface User {
-  id: number;
-  username: string;
-  password: string;
-  totalEarnings: string;
-  createdAt: string;
-}
-
-interface Earning {
-  id: number;
-  userId: number;
-  amount: string;
-  refreshInterval: number;
-  earnedAt: string;
-}
-
-interface EarningsData {
-  user: User;
-  stats: UserStats | null;
-  earnings: Earning[];
-}
+import { 
+  getUser, 
+  getUserStats, 
+  getEarnings, 
+  addEarning, 
+  createOrUpdateUserStats, 
+  initializeUser,
+  UserData,
+  UserStats,
+  Earning
+} from "@/lib/localStorage";
 
 export function useEarnings() {
-  const queryClient = useQueryClient();
+  const [user, setUser] = useState<UserData | null>(null);
+  const [stats, setStats] = useState<UserStats | null>(null);
+  const [earnings, setEarnings] = useState<Earning[]>([]);
   const [lastEarning, setLastEarning] = useState<Earning | null>(null);
   const [flashEarning, setFlashEarning] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Initialize user on app start
-  const { data: initData } = useQuery({
-    queryKey: ['/api/init'],
-    staleTime: Infinity, // Only call once
-  });
+  // Initialize data on mount
+  useEffect(() => {
+    const initializeData = () => {
+      try {
+        setIsLoading(true);
+        
+        // Initialize user
+        const userData = initializeUser();
+        setUser(userData);
+        
+        // Load stats
+        const statsData = getUserStats();
+        setStats(statsData);
+        
+        // Load earnings
+        const earningsData = getEarnings();
+        setEarnings(earningsData);
+        
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Error initializing data:', error);
+        setIsLoading(false);
+      }
+    };
 
-  // Get user stats and earnings
-  const { 
-    data: earningsData, 
-    isLoading, 
-    refetch: refetchEarnings 
-  } = useQuery<EarningsData>({
-    queryKey: ['/api/user/stats'],
-    refetchInterval: 5000, // Refresh every 5 seconds
-  });
-
-  // Add earnings mutation
-  const addEarningsMutation = useMutation({
-    mutationFn: async (refreshInterval: number) => {
-      const response = await fetch('/api/earnings/add', {
-        method: 'POST',
-        body: JSON.stringify({ refreshInterval }),
-        headers: { 'Content-Type': 'application/json' },
-      });
-      if (!response.ok) throw new Error('Failed to add earnings');
-      return await response.json();
-    },
-    onSuccess: (data: any) => {
-      // Flash animation for new earning
-      setLastEarning(data.earning);
-      setFlashEarning(true);
-      setTimeout(() => setFlashEarning(false), 800);
-      
-      // Refresh earnings data
-      queryClient.invalidateQueries({ queryKey: ['/api/user/stats'] });
-    },
-  });
-
-  // Update user stats mutation
-  const updateStatsMutation = useMutation({
-    mutationFn: async (statsData: Partial<UserStats>) => {
-      const response = await fetch('/api/user/stats/update', {
-        method: 'POST',
-        body: JSON.stringify(statsData),
-        headers: { 'Content-Type': 'application/json' },
-      });
-      if (!response.ok) throw new Error('Failed to update stats');
-      return await response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/user/stats'] });
-    },
-  });
+    initializeData();
+  }, []);
 
   // Record earnings when refresh happens
   const recordEarning = useCallback((refreshInterval: number) => {
-    addEarningsMutation.mutate(refreshInterval);
-  }, [addEarningsMutation]);
+    try {
+      const earningsMap: Record<number, number> = {
+        15: 0.001,
+        30: 0.003,
+        60: 0.005,
+        300: 0.01,
+      };
+      
+      const amount = earningsMap[refreshInterval] || 0;
+      const earning = addEarning(amount, refreshInterval);
+      
+      // Update state
+      setEarnings(getEarnings());
+      setUser(getUser());
+      setLastEarning(earning);
+      
+      // Flash animation
+      setFlashEarning(true);
+      setTimeout(() => setFlashEarning(false), 800);
+      
+    } catch (error) {
+      console.error('Error recording earning:', error);
+    }
+  }, []);
 
   // Update stats
   const updateStats = useCallback((statsData: Partial<UserStats>) => {
-    updateStatsMutation.mutate(statsData);
-  }, [updateStatsMutation]);
+    try {
+      const updatedStats = createOrUpdateUserStats(statsData);
+      setStats(updatedStats);
+    } catch (error) {
+      console.error('Error updating stats:', error);
+    }
+  }, []);
+
+  // Refresh data from localStorage
+  const refetchEarnings = useCallback(() => {
+    try {
+      setUser(getUser());
+      setStats(getUserStats());
+      setEarnings(getEarnings());
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+    }
+  }, []);
 
   // Calculate earnings per hour based on refresh interval
   const getEarningsPerHour = useCallback((refreshInterval: number) => {
@@ -136,9 +122,9 @@ export function useEarnings() {
 
   return {
     // Data
-    user: earningsData?.user,
-    stats: earningsData?.stats,
-    earnings: earningsData?.earnings || [],
+    user,
+    stats,
+    earnings,
     isLoading,
     
     // Latest earning info
@@ -154,8 +140,8 @@ export function useEarnings() {
     getEarningsPerHour,
     getEarningsRate,
     
-    // Loading states
-    isAddingEarning: addEarningsMutation.isPending,
-    isUpdatingStats: updateStatsMutation.isPending,
+    // Loading states (no longer needed but kept for compatibility)
+    isAddingEarning: false,
+    isUpdatingStats: false,
   };
 }
