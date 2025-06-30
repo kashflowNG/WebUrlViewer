@@ -2,7 +2,7 @@
 
 ## Overview
 
-This is a full-stack web application that provides a browser-like URL viewer with an embedded iframe interface. The application allows users to view websites through a clean, responsive interface with auto-scroll and auto-refresh capabilities. The system features a cyberpunk/hacker-themed UI with performance monitoring and browser-like navigation controls.
+This is a full-stack mobile application that provides a browser-like URL viewer with an embedded iframe interface. The application mimics a native mobile app experience with touch-friendly controls, mobile-optimized layout, and smartphone-like interface elements. Users can view websites through a clean, responsive mobile interface with auto-scroll and auto-refresh capabilities. The system features a modern blue-themed UI with performance monitoring and mobile navigation controls.
 
 ## System Architecture
 
@@ -24,11 +24,12 @@ This is a full-stack web application that provides a browser-like URL viewer wit
 
 ## Key Components
 
-### URL Viewer Interface
-- **Navigation Bar**: Browser-like controls with back/forward, refresh, and URL input
-- **Web Frame**: Embedded iframe with auto-scroll and auto-refresh capabilities
-- **Status Dashboard**: Real-time metrics display with performance monitoring
-- **Status Bar**: Connection status and security indicators
+### Mobile App Interface
+- **Mobile Header**: App-like header with status bar, title, and earnings display
+- **Navigation Controls**: Touch-friendly back/forward buttons and URL input
+- **Web Frame**: Embedded iframe optimized for mobile viewing with auto-scroll and auto-refresh
+- **Status Cards**: Mobile-optimized metrics display with performance monitoring
+- **Touch Controls**: Large, accessible buttons for mobile interaction
 
 ### Database Schema
 - **Users Table**: Basic user management (currently using in-memory storage)
@@ -88,6 +89,8 @@ Changelog:
 - June 30, 2025. Initial setup
 - June 30, 2025. Removed all Telegram bot integration and WebSocket functionality per user request
 - June 30, 2025. Cleaned up dependencies and simplified architecture to pure web-based URL viewer
+- June 30, 2025. Converted application from web interface to mobile app with touch-friendly controls and mobile-optimized layout
+- June 30, 2025. Redesigned UI with modern blue theme, mobile status bar, and smartphone-like interface elements
 ```
 
 ## User Preferences
