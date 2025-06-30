@@ -1,27 +1,29 @@
+import { useEffect, useRef, useState } from 'react';
 
-import { useState, useEffect } from 'react';
+interface WebSocketMessage {
+  type: string;
+  [key: string]: any;
+}
 
-export function useWebSocket() {
-  const [isConnected, setIsConnected] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState('connecting');
+export function useWebSocket(url: string) {
+  const ws = useRef<WebSocket | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('disconnected');
+
+  const sendMessage = (message: WebSocketMessage) => {
+    // WebSocket functionality disabled - no external communication needed
+    console.log('Message would be sent:', message);
+  };
 
   useEffect(() => {
-    // Simulate connection status for dashboard display
-    // In a real app, this would connect to an actual WebSocket
-    setConnectionStatus('connected');
-    setIsConnected(true);
-    
-    // Simulate periodic connection checks
-    const interval = setInterval(() => {
-      setIsConnected(true);
-      setConnectionStatus('connected');
-    }, 5000);
+    // WebSocket connection disabled
+    setConnectionStatus('disconnected');
 
-    return () => clearInterval(interval);
-  }, []);
+    return () => {
+      if (ws.current) {
+        ws.current.close();
+      }
+    };
+  }, [url]);
 
-  return {
-    isConnected,
-    connectionStatus
-  };
+  return { connectionStatus, sendMessage };
 }
