@@ -11,14 +11,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       let user = await storage.getUser(DEMO_USER_ID);
       if (!user) {
-        user = await storage.createUser({
-          username: 'demo_user',
-          password: 'demo_password'
-        });
+        // Try to find existing user by username first
+        user = await storage.getUserByUsername('demo_user');
+        if (!user) {
+          // Only create if user doesn't exist at all
+          user = await storage.createUser({
+            username: 'demo_user',
+            password: 'demo_password'
+          });
+        }
       }
       res.json({ success: true, user });
     } catch (error) {
       console.error('Error initializing demo user:', error);
+      // If it's a duplicate key error, try to get the existing user
+      if (error.code === '23505') {
+        try {
+          const existingUser = await storage.getUserByUsername('demo_user');
+          if (existingUser) {
+            res.json({ success: true, user: existingUser });
+            return;
+          }
+        } catch (getError) {
+          console.error('Error getting existing user:', getError);
+        }
+      }
       res.status(500).json({ error: 'Failed to initialize user' });
     }
   });

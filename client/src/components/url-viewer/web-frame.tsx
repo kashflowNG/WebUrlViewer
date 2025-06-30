@@ -214,7 +214,7 @@ export default function WebFrame({
         }
       } catch (error) {
         // Cross-origin iframe, can't access content
-        console.log('Auto-scroll applied (cross-origin)');
+        console.log('Auto-scroll applied to iframe');
       }
     }
   }, [scrollOffset, externalIframeRef]);
