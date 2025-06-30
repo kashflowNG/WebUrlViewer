@@ -1,9 +1,25 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Globe, AlertTriangle, ExternalLink, Play, Pause, RotateCcw, Activity, BarChart3, Clock, MousePointer, Wifi, ChevronDown, ChevronUp, DollarSign, TrendingUp } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { 
+  Globe, 
+  AlertTriangle, 
+  ExternalLink, 
+  Play, 
+  Pause, 
+  RotateCcw, 
+  Activity, 
+  BarChart3, 
+  Clock, 
+  MousePointer, 
+  Wifi, 
+  ChevronDown, 
+  ChevronUp, 
+  DollarSign, 
+  TrendingUp
+} from "lucide-react";
 import { useEarnings } from "@/hooks/use-earnings";
 
 interface WebFrameProps {
@@ -27,11 +43,11 @@ export default function WebFrame({
   onLoadExample,
   iframeRef: externalIframeRef
 }: WebFrameProps) {
-  const [autoScroll, setAutoScroll] = useState(() => {
+  const [autoScrollEnabled, setAutoScroll] = useState(() => {
     const saved = localStorage.getItem('urlViewer_autoScroll');
     return saved ? JSON.parse(saved) : false;
   });
-  const [autoRefresh, setAutoRefresh] = useState(() => {
+  const [autoRefreshEnabled, setAutoRefresh] = useState(() => {
     const saved = localStorage.getItem('urlViewer_autoRefresh');
     return saved ? JSON.parse(saved) : false;
   });
@@ -97,7 +113,7 @@ export default function WebFrame({
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
-    
+
     if (hours > 0) {
       return `${hours}h ${minutes}m ${secs}s`;
     } else if (minutes > 0) {
@@ -109,12 +125,12 @@ export default function WebFrame({
 
   // Save settings to localStorage when they change
   useEffect(() => {
-    localStorage.setItem('urlViewer_autoScroll', JSON.stringify(autoScroll));
-  }, [autoScroll]);
+    localStorage.setItem('urlViewer_autoScroll', JSON.stringify(autoScrollEnabled));
+  }, [autoScrollEnabled]);
 
   useEffect(() => {
-    localStorage.setItem('urlViewer_autoRefresh', JSON.stringify(autoRefresh));
-  }, [autoRefresh]);
+    localStorage.setItem('urlViewer_autoRefresh', JSON.stringify(autoRefreshEnabled));
+  }, [autoRefreshEnabled]);
 
   useEffect(() => {
     localStorage.setItem('urlViewer_refreshInterval', JSON.stringify(refreshInterval));
@@ -122,7 +138,7 @@ export default function WebFrame({
 
   // Auto-scroll functionality
   useEffect(() => {
-    if (autoScroll && currentUrl && !isLoading) {
+    if (autoScrollEnabled && currentUrl && !isLoading) {
       scrollIntervalRef.current = setInterval(() => {
         setScrollOffset(prevOffset => {
           const maxOffset = 2000;
@@ -143,10 +159,10 @@ export default function WebFrame({
               newDirection = 1;
             }
           }
-          
+
           setScrollDirection(newDirection);
           setTotalScrolls(prev => prev + 1);
-          
+
           return newOffset;
         });
       }, 2500); // Scroll every 2.5 seconds
@@ -165,20 +181,20 @@ export default function WebFrame({
         clearInterval(scrollIntervalRef.current);
       }
     };
-  }, [autoScroll, currentUrl, isLoading, scrollDirection]);
+  }, [autoScrollEnabled, currentUrl, isLoading, scrollDirection]);
 
   // Auto-refresh functionality with earnings tracking
   useEffect(() => {
-    if (autoRefresh && currentUrl && !isLoading) {
+    if (autoRefreshEnabled && currentUrl && !isLoading) {
       refreshIntervalRef.current = setInterval(() => {
         if (externalIframeRef?.current) {
           // Reload the iframe
           externalIframeRef.current.src = externalIframeRef.current.src;
           setTotalRefreshes(prev => prev + 1);
-          
+
           // Record earnings for this refresh
           recordEarning(refreshInterval);
-          
+
           // Update stats
           updateStats({
             refreshCount: totalRefreshes + 1,
@@ -201,7 +217,7 @@ export default function WebFrame({
         clearInterval(refreshIntervalRef.current);
       }
     };
-  }, [autoRefresh, currentUrl, isLoading, refreshInterval, externalIframeRef, recordEarning, updateStats, totalRefreshes]);
+  }, [autoRefreshEnabled, currentUrl, isLoading, refreshInterval, externalIframeRef, recordEarning, updateStats, totalRefreshes]);
 
   // Apply scroll offset to iframe when it changes
   useEffect(() => {
@@ -218,6 +234,37 @@ export default function WebFrame({
       }
     }
   }, [scrollOffset, externalIframeRef]);
+
+  // Handle manual scroll
+  const handleManualScroll = useCallback((direction: 'up' | 'down') => {
+    if (!externalIframeRef?.current) return;
+
+    const scrollAmount = 150;
+    const newOffset = direction === 'down' 
+      ? scrollOffset + scrollAmount 
+      : Math.max(0, scrollOffset - scrollAmount);
+
+    setScrollOffset(newOffset);
+    setScrollDirection(direction === 'down' ? 1 : -1);
+    setTotalScrolls(prev => prev + 1);
+
+    // Update stats for tracking
+    updateStats({
+      scrollCount: totalScrolls + 1,
+      lastScroll: new Date().toISOString()
+    });
+  }, [scrollOffset, externalIframeRef, totalScrolls, updateStats]);
+
+  // Stats update effect
+  useEffect(() => {
+    if (user?.id) {
+      updateStats({
+        refreshCount: totalRefreshes,
+        scrollCount: totalScrolls,
+        isActive: true
+      });
+    }
+  }, [totalRefreshes, totalScrolls, user?.id, updateStats]);
 
   if (hasError) {
     return (
@@ -297,7 +344,7 @@ export default function WebFrame({
               <ChevronUp className="w-4 h-4" />
             </Button>
           </div>
-          
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* System Status */}
             <div className="space-y-2">
@@ -305,7 +352,7 @@ export default function WebFrame({
                 <BarChart3 className="w-3 h-3 text-green-400" />
                 <span className="text-xs font-mono text-green-300 font-bold">SYSTEM STATUS</span>
               </div>
-              
+
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
@@ -318,7 +365,7 @@ export default function WebFrame({
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-mono text-green-300">UPTIME:</span>
@@ -340,7 +387,7 @@ export default function WebFrame({
                   </div>
                   <div className="text-xs text-green-300">REFRESHES</div>
                 </div>
-                
+
                 <div className="bg-purple-500/10 border border-purple-500/20 rounded p-2">
                   <div className="flex items-center justify-center gap-1 mb-1">
                     <MousePointer className="w-3 h-3 text-purple-400" />
@@ -350,7 +397,7 @@ export default function WebFrame({
                   </div>
                   <div className="text-xs text-purple-300">SCROLLS</div>
                 </div>
-                
+
                 <div className="bg-yellow-500/10 border border-yellow-500/20 rounded p-2">
                   <div className="flex items-center justify-center gap-1 mb-1">
                     <Clock className="w-3 h-3 text-yellow-400" />
@@ -375,17 +422,17 @@ export default function WebFrame({
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-mono text-gray-300">AUTO-SCROLL:</span>
                   <Button
-                    onClick={() => setAutoScroll(!autoScroll)}
+                    onClick={() => setAutoScroll(prev => !prev)}
                     variant="ghost"
                     size="sm"
                     className={`h-6 px-2 text-xs font-mono ${
-                      autoScroll 
+                      autoScrollEnabled 
                         ? 'bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500/30' 
                         : 'bg-gray-500/20 text-gray-400 border border-gray-500/30 hover:bg-gray-500/30'
                     }`}
                   >
-                    {autoScroll ? <Pause className="w-3 h-3 mr-1" /> : <Play className="w-3 h-3 mr-1" />}
-                    {autoScroll ? 'ON' : 'OFF'}
+                    {autoScrollEnabled ? <Pause className="w-3 h-3 mr-1" /> : <Play className="w-3 h-3 mr-1" />}
+                    {autoScrollEnabled ? 'ON' : 'OFF'}
                   </Button>
                 </div>
 
@@ -393,17 +440,17 @@ export default function WebFrame({
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-mono text-gray-300">AUTO-REFRESH:</span>
                   <Button
-                    onClick={() => setAutoRefresh(!autoRefresh)}
+                    onClick={() => setAutoRefresh(prev => !prev)}
                     variant="ghost"
                     size="sm"
                     className={`h-6 px-2 text-xs font-mono ${
-                      autoRefresh 
+                      autoRefreshEnabled 
                         ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30 hover:bg-blue-500/30' 
                         : 'bg-gray-500/20 text-gray-400 border border-gray-500/30 hover:bg-gray-500/30'
                     }`}
                   >
-                    {autoRefresh ? <Pause className="w-3 h-3 mr-1" /> : <Play className="w-3 h-3 mr-1" />}
-                    {autoRefresh ? 'ON' : 'OFF'}
+                    {autoRefreshEnabled ? <Pause className="w-3 h-3 mr-1" /> : <Play className="w-3 h-3 mr-1" />}
+                    {autoRefreshEnabled ? 'ON' : 'OFF'}
                   </Button>
                 </div>
 

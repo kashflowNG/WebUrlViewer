@@ -19,7 +19,7 @@ export function useUrlNavigation() {
     const savedUrl = localStorage.getItem('urlViewer_currentUrl') || "";
     const savedHistory = JSON.parse(localStorage.getItem('urlViewer_history') || '[]');
     const savedIndex = parseInt(localStorage.getItem('urlViewer_currentIndex') || '-1');
-    
+
     return {
       currentUrl: savedUrl,
       isLoading: false,
@@ -125,11 +125,11 @@ export function useUrlNavigation() {
         const newIndex = prev.currentIndex - 1;
         const url = prev.history[newIndex];
         const navButtons = updateNavigationButtons(prev.history, newIndex);
-        
+
         // Save to localStorage
         localStorage.setItem('urlViewer_currentUrl', url);
         localStorage.setItem('urlViewer_currentIndex', newIndex.toString());
-        
+
         return {
           ...prev,
           currentUrl: url,
@@ -159,11 +159,11 @@ export function useUrlNavigation() {
         const newIndex = prev.currentIndex + 1;
         const url = prev.history[newIndex];
         const navButtons = updateNavigationButtons(prev.history, newIndex);
-        
+
         // Save to localStorage
         localStorage.setItem('urlViewer_currentUrl', url);
         localStorage.setItem('urlViewer_currentIndex', newIndex.toString());
-        
+
         return {
           ...prev,
           currentUrl: url,
