@@ -85,40 +85,40 @@ export default function NavigationBar({
   };
 
   return (
-    <header className="bg-white/95 border-b border-gray-200/30 shadow-lg backdrop-blur-sm ">
+    <header className="bg-black/95 border-b border-purple-500/30 shadow-lg backdrop-blur-sm neon-border">
       <div className="flex items-center px-4 py-3 gap-3">
         {/* Navigation Controls */}
         <div className="flex items-center gap-2">
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 w-8 p-0 bg-white/50 border border-gray-200/30 hover:bg-gray-200/20 hover:border-gray-300 disabled:opacity-30"
+            className="h-8 w-8 p-0 bg-black/50 border border-purple-500/30 hover:bg-purple-500/20 hover:border-purple-400 neon-glow disabled:opacity-30"
             disabled={!canGoBack}
             onClick={onGoBack}
             title="Go back"
           >
-            <ArrowLeft className="h-5 w-5 text-gray-400" />
+            <ArrowLeft className="h-5 w-5 text-purple-400" />
           </Button>
 
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 w-8 p-0 bg-white/50 border border-gray-200/30 hover:bg-gray-200/20 hover:border-gray-300 disabled:opacity-30"
+            className="h-8 w-8 p-0 bg-black/50 border border-purple-500/30 hover:bg-purple-500/20 hover:border-purple-400 neon-glow disabled:opacity-30"
             disabled={!canGoForward}
             onClick={onGoForward}
             title="Go forward"
           >
-            <ArrowRight className="h-5 w-5 text-gray-400" />
+            <ArrowRight className="h-5 w-5 text-purple-400" />
           </Button>
 
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 w-8 p-0 bg-white/50 border border-gray-200/30 hover:bg-gray-200/20 hover:border-gray-300"
+            className="h-8 w-8 p-0 bg-black/50 border border-purple-500/30 hover:bg-purple-500/20 hover:border-purple-400 neon-glow"
             onClick={onRefresh}
             title="Refresh page"
           >
-            <RotateCcw className={`h-5 w-5 text-gray-400 transition-transform ${isLoading ? 'animate-spin' : ''}`} />
+            <RotateCcw className={`h-5 w-5 text-purple-400 transition-transform ${isLoading ? 'animate-spin' : ''}`} />
           </Button>
         </div>
 
@@ -135,21 +135,21 @@ export default function NavigationBar({
               onChange={(e) => handleInputChange(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="$ ./target_url --access https://example.com"
-              className="w-full pl-10 pr-12 py-3 text-sm font-mono bg-white/60 border-gray-200/50 text-gray-700 placeholder:text-gray-500/60 focus:border-gray-300 focus:ring-gray-300/30"
+              className="w-full pl-10 pr-12 py-3 text-sm font-mono bg-black/60 border-cyan-500/50 text-cyan-300 placeholder:text-cyan-600/60 focus:border-cyan-400 focus:ring-cyan-400/30 neon-border"
               autoComplete="url"
               spellCheck={false}
             />
 
             {isLoading ? (
               <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                <div className="animate-spin h-4 w-4 border-2 border-gray-400 border-t-transparent rounded-full" />
+                <div className="animate-spin h-4 w-4 border-2 border-cyan-400 border-t-transparent rounded-full" />
               </div>
             ) : (
               <Button
                 type="submit"
                 variant="ghost"
                 size="sm"
-                className="absolute inset-y-0 right-0 pr-3 h-auto hover:bg-gray-200/20 text-gray-400 hover:text-gray-300"
+                className="absolute inset-y-0 right-0 pr-3 h-auto hover:bg-purple-500/20 text-purple-400 hover:text-purple-300"
               >
                 <GoArrow className="h-4 w-4 transition-colors" />
               </Button>
@@ -157,7 +157,7 @@ export default function NavigationBar({
           </form>
 
           {urlError && (
-            <div className="mt-2 text-sm text-red-400 flex items-center gap-2">
+            <div className="mt-2 text-sm text-red-400 flex items-center gap-2 neon-text">
               <AlertTriangle className="w-4 h-4" />
               <span className="font-mono">ERROR: {urlError}</span>
             </div>
@@ -169,20 +169,20 @@ export default function NavigationBar({
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 w-8 p-0 bg-white/50 border border-gray-200/30 hover:bg-gray-200/20 hover:border-gray-300"
+            className="h-8 w-8 p-0 bg-black/50 border border-purple-500/30 hover:bg-purple-500/20 hover:border-purple-400 neon-glow"
             onClick={handleHome}
             title="Home"
           >
-            <Home className="h-5 w-5 text-gray-400" />
+            <Home className="h-5 w-5 text-purple-400" />
           </Button>
 
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 w-8 p-0 bg-white/50 border border-gray-200/30 hover:bg-gray-200/20 hover:border-gray-300"
+            className="h-8 w-8 p-0 bg-black/50 border border-cyan-500/30 hover:bg-cyan-500/20 hover:border-cyan-400 neon-glow"
             title="Settings"
           >
-            <Settings className="h-5 w-5 text-gray-400" />
+            <Settings className="h-5 w-5 text-cyan-400" />
           </Button>
         </div>
       </div>
